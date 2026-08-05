@@ -1,0 +1,5 @@
+{% partialdef commentary-block %}
+    <div id="{{ block_dom_id }}" data-block-type="commentary" data-block-id="{{ block.id }}" data-chat-raw-text="{{ block.content }}">
+        {{ block.content|linebreaksbr }}
+    </div>
+{% endpartialdef commentary-block %}

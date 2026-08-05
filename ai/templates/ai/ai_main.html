@@ -1,0 +1,937 @@
+{% extends "core/base.html" %}
+
+{% block title %}Dux Чат{% endblock %}
+
+{% block content %}
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
+    <style>
+        #chat-app .markdown-content {
+            max-width: 100%;
+            overflow-x: auto;
+        }
+
+        #chat-app .markdown-content > :first-child {
+            margin-top: 0;
+        }
+
+        #chat-app .markdown-content > :last-child {
+            margin-bottom: 0;
+        }
+
+        #chat-app .markdown-content p,
+        #chat-app .markdown-content ul,
+        #chat-app .markdown-content ol,
+        #chat-app .markdown-content pre,
+        #chat-app .markdown-content table {
+            margin-bottom: 0.65rem;
+        }
+
+        #chat-app .markdown-content ul,
+        #chat-app .markdown-content ol {
+            padding-left: 1.25rem;
+        }
+
+        #chat-app .markdown-content ul {
+            list-style: disc;
+        }
+
+        #chat-app .markdown-content ol {
+            list-style: decimal;
+        }
+
+        #chat-app .markdown-content table {
+            min-width: 100%;
+            width: max-content;
+            border-collapse: collapse;
+            font-size: 0.875em;
+            line-height: 1.45;
+        }
+
+        #chat-app .markdown-content th,
+        #chat-app .markdown-content td {
+            border: 1px solid color-mix(in oklab, currentColor 18%, transparent);
+            padding: 0.35rem 0.5rem;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        #chat-app .markdown-content th {
+            background: color-mix(in oklab, currentColor 8%, transparent);
+            font-weight: 600;
+        }
+
+        #chat-app .markdown-content code {
+            border-radius: 0.25rem;
+            background: color-mix(in oklab, currentColor 10%, transparent);
+            padding: 0.1rem 0.25rem;
+            font-size: 0.9em;
+        }
+
+        #chat-app .markdown-content pre {
+            overflow-x: auto;
+            border-radius: 0.5rem;
+            background: color-mix(in oklab, currentColor 9%, transparent);
+            padding: 0.75rem;
+        }
+
+        #chat-app .markdown-content pre code {
+            background: transparent;
+            padding: 0;
+        }
+
+        #chat-app .data-table-copy-button[data-copy-state="success"] {
+            opacity: 1;
+            color: var(--color-success);
+        }
+
+        #chat-app .data-table-copy-button[data-copy-state="error"] {
+            opacity: 1;
+        }
+
+        #chat-app .sql-copy-button[data-copy-state="success"] {
+            color: var(--color-success);
+        }
+    </style>
+    <script>
+        (() => {
+            const CHAT_SESSION_STORAGE_KEY = "chatSessionKey";
+            const CHAT_MESSAGES_SELECTOR = "#chat-messages";
+            const MARKDOWN_RENDER_DEBOUNCE_MS = 1000; // start rendering only if no tokens came in for this time to avoid flickering
+            let transcriptObserver;
+            let transcriptPersistencePaused = false;
+            let persistTranscriptTimeoutId = 0;
+
+            const getChatMessagesRoot = () => document.querySelector(CHAT_MESSAGES_SELECTOR);
+            const getMessagesStorageKey = (chatSessionKey) => `chat-ui:${chatSessionKey}:messages`;
+            const getUsageStorageKey = (chatSessionKey) => `chat-ui:${chatSessionKey}:usage`;
+            const TABLE_COPY_RESET_MS = 1500;
+            const RESERVED_ANSWER_DETAIL_NOTE_LABELS = new Set(["sql", "источник", "строк показано", "таблицы"]);
+            const TABLE_COPY_ICONS = {
+                copy: [
+                    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"',
+                    ' stroke="currentColor" stroke-width="1.8" class="h-4 w-4">',
+                    '<path stroke-linecap="round" stroke-linejoin="round" d="',
+                    'M8 7.5V6a2.25 2.25 0 0 1 2.25-2.25h7.5A2.25 2.25 0 0 1 20 6',
+                    'v7.5a2.25 2.25 0 0 1-2.25 2.25h-1.5" />',
+                    '<path stroke-linecap="round" stroke-linejoin="round" d="',
+                    'M4 10.5A2.25 2.25 0 0 1 6.25 8.25h7.5A2.25 2.25 0 0 1 16 10.5',
+                    'V18a2.25 2.25 0 0 1-2.25 2.25h-7.5A2.25 2.25 0 0 1 4 18v-7.5Z" />',
+                    '</svg>',
+                ].join(""),
+                success: [
+                    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"',
+                    ' stroke="currentColor" stroke-width="2" class="h-4 w-4">',
+                    '<path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />',
+                    '</svg>',
+                ].join(""),
+                error: [
+                    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"',
+                    ' stroke="currentColor" stroke-width="2" class="h-4 w-4">',
+                    '<path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01',
+                    'M10.29 3.86 1.82 18a2.25 2.25 0 0 0 1.93 3.38h16.5',
+                    'A2.25 2.25 0 0 0 22.18 18L13.71 3.86a2.25 2.25 0 0 0-3.42 0Z" />',
+                    '</svg>',
+                ].join(""),
+            };
+
+            const getMarkdownLibraries = () => {
+                const markdownParser = globalThis.marked;
+                const sanitizer = globalThis.DOMPurify;
+                if (
+                    !markdownParser
+                    || typeof markdownParser.setOptions !== "function"
+                    || typeof markdownParser.parse !== "function"
+                    || !sanitizer
+                    || typeof sanitizer.sanitize !== "function"
+                ) {
+                    return null;
+                }
+                return { markdownParser, sanitizer };
+            };
+
+            const configureMarkdownRendering = () => {
+                const libraries = getMarkdownLibraries();
+                if (!libraries) {
+                    return false;
+                }
+                libraries.markdownParser.setOptions({ gfm: true, breaks: true });
+                return true;
+            };
+
+            const markdownRenderingAvailable = configureMarkdownRendering();
+
+            const loadUsageState = (chatSessionKey) => {
+                try {
+                    return JSON.parse(sessionStorage.getItem(getUsageStorageKey(chatSessionKey)) || "{}");
+                } catch {
+                    return {};
+                }
+            };
+
+            const getDefaultChatMarkup = () => {
+                const template = document.getElementById("chat-default-content-template");
+                return template instanceof HTMLTemplateElement ? template.innerHTML.trim() : "";
+            };
+
+            const normalizeMessageText = (text) => text.replace(/\r\n/g, "\n").trim();
+            const normalizeTableCopyCell = (text) => String(text || "")
+                .replace(/[\t\r\n]+/g, " ")
+                .replace(/ {2,}/g, " ")
+                .trim();
+
+            const createCopyButton = ({ className, datasetKey, defaultLabel }) => {
+                const button = document.createElement("button");
+                button.type = "button";
+                button.className = className;
+                button.dataset[datasetKey] = "true";
+                button.setAttribute("aria-label", defaultLabel);
+                button.title = defaultLabel;
+                const icon = document.createElement("span");
+                icon.dataset.copyIcon = "true";
+                icon.setAttribute("aria-hidden", "true");
+                icon.innerHTML = TABLE_COPY_ICONS.copy;
+                button.appendChild(icon);
+                return button;
+            };
+
+            const createTableCopyButton = () => createCopyButton({
+                className: [
+                    "btn btn-ghost btn-xs data-table-copy-button opacity-0 transition-opacity",
+                    "group-hover:opacity-100 focus-visible:opacity-100",
+                ].join(" "),
+                datasetKey: "tableCopyButton",
+                defaultLabel: "Скопировать таблицу",
+            });
+
+            const createSqlCopyButton = () => createCopyButton({
+                className: "btn btn-ghost btn-xs sql-copy-button",
+                datasetKey: "sqlCopyButton",
+                defaultLabel: "Скопировать SQL",
+            });
+
+            const setCopyButtonState = (button, state, labels) => {
+                const icon = button.querySelector("[data-copy-icon]");
+                button.dataset.copyState = state;
+                if (state === "success") {
+                    button.setAttribute("aria-label", labels.success);
+                    button.title = labels.success;
+                    if (icon) icon.innerHTML = TABLE_COPY_ICONS.success;
+                } else if (state === "error") {
+                    button.setAttribute("aria-label", labels.error);
+                    button.title = labels.error;
+                    if (icon) icon.innerHTML = TABLE_COPY_ICONS.error;
+                } else {
+                    delete button.dataset.copyState;
+                    button.setAttribute("aria-label", labels.default);
+                    button.title = labels.default;
+                    if (icon) icon.innerHTML = TABLE_COPY_ICONS.copy;
+                }
+            };
+
+            const TABLE_COPY_LABELS = {
+                default: "Скопировать таблицу",
+                success: "Таблица скопирована",
+                error: "Не удалось скопировать таблицу",
+            };
+            const SQL_COPY_LABELS = {
+                default: "Скопировать SQL",
+                success: "SQL скопирован",
+                error: "Не удалось скопировать SQL",
+            };
+
+            const setTableCopyButtonState = (button, state) => setCopyButtonState(button, state, TABLE_COPY_LABELS);
+            const setSqlCopyButtonState = (button, state) => setCopyButtonState(button, state, SQL_COPY_LABELS);
+
+            const resetCopyButtonLater = (button, resetState) => {
+                window.clearTimeout(Number(button.dataset.copyResetTimeoutId || 0));
+                const timeoutId = window.setTimeout(() => resetState(button, "idle"), TABLE_COPY_RESET_MS);
+                button.dataset.copyResetTimeoutId = String(timeoutId);
+            };
+
+            const resetTableCopyButtonLater = (button) => resetCopyButtonLater(button, setTableCopyButtonState);
+            const resetSqlCopyButtonLater = (button) => resetCopyButtonLater(button, setSqlCopyButtonState);
+
+            const getDataTableTsv = (tableBlock) => {
+                const table = tableBlock.querySelector("table");
+                if (!(table instanceof HTMLTableElement)) {
+                    return "";
+                }
+                const rows = [];
+                const headers = Array.from(
+                    table.querySelectorAll("thead th"),
+                    (cell) => normalizeTableCopyCell(cell.textContent),
+                );
+                if (headers.length) {
+                    rows.push(headers);
+                }
+                table.querySelectorAll("tbody tr").forEach((row) => {
+                    rows.push(Array.from(
+                        row.querySelectorAll("td"),
+                        (cell) => normalizeTableCopyCell(cell.textContent),
+                    ));
+                });
+                return rows.map((row) => row.join("\t")).join("\n");
+            };
+
+            const fallbackCopyText = (text) => {
+                const textarea = document.createElement("textarea");
+                textarea.value = text;
+                textarea.setAttribute("readonly", "");
+                textarea.style.position = "fixed";
+                textarea.style.left = "-9999px";
+                textarea.style.top = "0";
+                document.body.appendChild(textarea);
+                textarea.select();
+                let copied = false;
+                try {
+                    copied = document.execCommand("copy");
+                } finally {
+                    document.body.removeChild(textarea);
+                }
+                return copied;
+            };
+
+            const writeClipboardText = async (text) => {
+                if (window.isSecureContext && navigator.clipboard) {
+                    await navigator.clipboard.writeText(text);
+                    return true;
+                }
+                return fallbackCopyText(text);
+            };
+
+            const copyDataTableToClipboard = async (button) => {
+                try {
+                    const tableBlock = button.closest('[data-block-type="data_table"]');
+                    if (!(tableBlock instanceof HTMLElement)) {
+                        throw new Error("Table block is unavailable");
+                    }
+                    const tsv = getDataTableTsv(tableBlock);
+                    if (!tsv) {
+                        throw new Error("Table has no copyable rows");
+                    }
+                    if (!(await writeClipboardText(tsv))) {
+                        throw new Error("Copy command failed");
+                    }
+                    setTableCopyButtonState(button, "success");
+                } catch {
+                    setTableCopyButtonState(button, "error");
+                }
+                resetTableCopyButtonLater(button);
+            };
+
+            const copySqlToClipboard = async (button) => {
+                try {
+                    const sqlBlock = button.closest("[data-sql-details]");
+                    const code = sqlBlock ? sqlBlock.querySelector("code") : null;
+                    const sql = code instanceof HTMLElement ? code.textContent || "" : "";
+                    if (!sql) {
+                        throw new Error("SQL is unavailable");
+                    }
+                    if (!(await writeClipboardText(sql))) {
+                        throw new Error("Copy command failed");
+                    }
+                    setSqlCopyButtonState(button, "success");
+                } catch {
+                    setSqlCopyButtonState(button, "error");
+                }
+                resetSqlCopyButtonLater(button);
+            };
+
+            const renderMarkdownElement = (element, rawText) => {
+                const libraries = getMarkdownLibraries();
+                if (!libraries) {
+                    return false;
+                }
+                const markdownHtml = libraries.sanitizer.sanitize(libraries.markdownParser.parse(rawText));
+                const content = document.createElement("div");
+                content.className = "markdown-content";
+                content.innerHTML = markdownHtml;
+                element.innerHTML = "";
+                element.appendChild(content);
+                return true;
+            };
+
+            const renderMarkdownTargets = (targets) => {
+                targets.forEach((target) => {
+                    if (!(target instanceof HTMLElement)) {
+                        return;
+                    }
+                    const rawText = target.dataset.chatRawText || normalizeMessageText(target.innerText || "");
+                    if (!rawText || target.dataset.chatRenderedText === rawText) {
+                        return;
+                    }
+                    target.dataset.chatRawText = rawText;
+                    if (renderMarkdownElement(target, rawText)) {
+                        target.dataset.chatRenderedText = rawText;
+                    }
+                });
+            };
+
+            const renderAssistantMarkdown = () => {
+                if (!markdownRenderingAvailable) {
+                    return;
+                }
+                const root = getChatMessagesRoot();
+                if (!(root instanceof HTMLElement)) {
+                    return;
+                }
+                renderMarkdownTargets(root.querySelectorAll('[data-block-type="commentary"]'));
+                renderMarkdownTargets(root.querySelectorAll('[data-chat-role="assistant"]:not([data-chat-blocks]) .chat-bubble'));
+            };
+
+            const stringifyBlocks = (blocks) => {
+                try {
+                    return JSON.stringify(blocks);
+                } catch {
+                    return "[]";
+                }
+            };
+
+            const createCommentaryBlock = (block) => {
+                const element = document.createElement("div");
+                element.dataset.blockType = "commentary";
+                element.dataset.blockId = typeof block.id === "string" ? block.id : "";
+                element.dataset.chatRawText = typeof block.content === "string" ? block.content : "";
+                element.textContent = element.dataset.chatRawText;
+                return element;
+            };
+
+            const getTableDetails = (block, renderedRowCount, rowCount) => {
+                const details = block.details && typeof block.details === "object" ? block.details : {};
+                const facts = details.facts && typeof details.facts === "object" ? details.facts : {};
+                const notes = Array.isArray(details.notes) ? details.notes : [];
+                const normalizedNotes = notes.flatMap((note) => {
+                    if (!note || typeof note !== "object") return [];
+                    const label = typeof note.label === "string" ? note.label.trim() : "";
+                    const value = typeof note.value === "string" ? note.value.trim() : "";
+                    const normalizedLabel = label.toLocaleLowerCase("ru-RU").replace(/:$/, "").trim();
+                    if (RESERVED_ANSWER_DETAIL_NOTE_LABELS.has(normalizedLabel)) {
+                        return [];
+                    }
+                    return label && value ? [{ label, value }] : [];
+                });
+                const sourceId = typeof facts.source_id === "string" ? facts.source_id.trim() : "";
+                const tables = Array.isArray(facts.tables) ? facts.tables.map(String).filter(Boolean) : [];
+                const rawSql = typeof facts.raw_sql === "string" ? facts.raw_sql.trim() : "";
+                return {
+                    hasDetails: Boolean(sourceId || tables.length || normalizedNotes.length || rawSql),
+                    sourceId,
+                    tables,
+                    renderedRowCount,
+                    rowCount,
+                    notes: normalizedNotes,
+                    rawSql,
+                };
+            };
+
+            const appendDetailRow = (list, label, value) => {
+                const dt = document.createElement("dt");
+                dt.className = "font-medium opacity-70";
+                dt.textContent = label;
+                const dd = document.createElement("dd");
+                dd.textContent = value;
+                list.append(dt, dd);
+            };
+
+            const createDataTableDetailsBlock = (details) => {
+                if (!details.hasDetails) {
+                    return null;
+                }
+                const wrapper = document.createElement("details");
+                wrapper.className = "rounded-box border border-base-300 bg-base-200/40 px-3 py-2 text-sm";
+                const summary = document.createElement("summary");
+                summary.className = "cursor-pointer select-none text-xs font-medium opacity-80";
+                summary.textContent = "Детали";
+                const content = document.createElement("div");
+                content.className = "mt-2 space-y-2 text-xs";
+                const list = document.createElement("dl");
+                list.className = "grid gap-1 sm:grid-cols-[max-content_1fr]";
+
+                if (details.sourceId) appendDetailRow(list, "Источник:", details.sourceId);
+                if (details.tables.length) appendDetailRow(list, "Таблицы:", details.tables.join(", "));
+                appendDetailRow(list, "Строк показано:", `${details.renderedRowCount} из ${details.rowCount}`);
+                details.notes.forEach((note) => appendDetailRow(list, `${note.label}:`, note.value));
+                content.appendChild(list);
+
+                if (details.rawSql) {
+                    const sqlDetails = document.createElement("details");
+                    sqlDetails.className = "rounded-box border border-base-300 bg-base-100 px-3 py-2";
+                    sqlDetails.dataset.sqlDetails = "true";
+                    const sqlSummary = document.createElement("summary");
+                    sqlSummary.className = "cursor-pointer select-none font-medium opacity-80";
+                    sqlSummary.textContent = "Показать SQL";
+                    const sqlActions = document.createElement("div");
+                    sqlActions.className = "mt-2 flex justify-end";
+                    sqlActions.appendChild(createSqlCopyButton());
+                    const pre = document.createElement("pre");
+                    pre.className = "mt-2 max-h-96 overflow-auto whitespace-pre-wrap rounded-box bg-base-200 p-3";
+                    const code = document.createElement("code");
+                    code.textContent = details.rawSql;
+                    pre.appendChild(code);
+                    sqlDetails.append(sqlSummary, sqlActions, pre);
+                    content.appendChild(sqlDetails);
+                }
+
+                wrapper.append(summary, content);
+                return wrapper;
+            };
+
+            const createDataTableBlock = (block) => {
+                const element = document.createElement("div");
+                element.className = "group space-y-2";
+                element.dataset.blockType = "data_table";
+                element.dataset.blockId = typeof block.id === "string" ? block.id : "";
+
+                const columns = Array.isArray(block.columns) ? block.columns : [];
+                const rows = Array.isArray(block.rows) ? block.rows : [];
+                const meta = block.meta && typeof block.meta === "object" ? block.meta : {};
+                const title = typeof block.title === "string" && block.title ? block.title : "Результаты запроса";
+                const renderedRowCount = Number.isFinite(Number(meta.rendered_row_count))
+                    ? Number(meta.rendered_row_count)
+                    : rows.length;
+                const rowCount = Number.isFinite(Number(meta.row_count)) ? Number(meta.row_count) : renderedRowCount;
+                const details = getTableDetails(block, renderedRowCount, rowCount);
+
+                const header = document.createElement("div");
+                header.className = "flex flex-wrap items-baseline justify-between gap-2";
+                const heading = document.createElement("div");
+                heading.className = "font-semibold";
+                heading.textContent = title;
+                const summary = document.createElement("div");
+                summary.className = "text-xs opacity-70";
+                summary.textContent = `Показано строк: ${renderedRowCount} из ${rowCount}`;
+                if (meta.truncated) {
+                    const badge = document.createElement("span");
+                    badge.className = "badge badge-warning badge-sm ml-1";
+                    badge.textContent = "сокращено";
+                    summary.appendChild(badge);
+                }
+                const summaryActions = document.createElement("div");
+                summaryActions.className = "flex items-center gap-2";
+                summaryActions.appendChild(summary);
+                element.appendChild(header);
+
+                if (!columns.length || !rows.length) {
+                    header.append(heading, summaryActions);
+                    const emptyState = document.createElement("div");
+                    emptyState.className = [
+                        "rounded-box border border-dashed border-base-300 bg-base-200/60",
+                        "p-3 text-sm opacity-80",
+                    ].join(" ");
+                    emptyState.textContent = "По этому запросу нет строк для отображения.";
+                    element.appendChild(emptyState);
+                    const detailsBlock = createDataTableDetailsBlock(details);
+                    if (detailsBlock) element.appendChild(detailsBlock);
+                    return element;
+                }
+
+                summaryActions.appendChild(createTableCopyButton());
+                header.append(heading, summaryActions);
+
+                const tableWrap = document.createElement("div");
+                tableWrap.className = "overflow-x-auto rounded-box border border-base-300 bg-base-100";
+                const table = document.createElement("table");
+                table.className = "table table-zebra table-sm min-w-full";
+                const thead = document.createElement("thead");
+                const headerRow = document.createElement("tr");
+                columns.forEach((column) => {
+                    const th = document.createElement("th");
+                    const key = column && typeof column.key === "string" ? column.key : "";
+                    th.scope = "col";
+                    th.dataset.columnKey = key;
+                    th.textContent = column && typeof column.label === "string" && column.label ? column.label : key;
+                    headerRow.appendChild(th);
+                });
+                thead.appendChild(headerRow);
+                const tbody = document.createElement("tbody");
+                rows.forEach((row) => {
+                    const tr = document.createElement("tr");
+                    columns.forEach((column) => {
+                        const td = document.createElement("td");
+                        const key = column && typeof column.key === "string" ? column.key : "";
+                        const value = row && typeof row === "object" ? row[key] : "";
+                        td.textContent = value == null ? "" : String(value);
+                        tr.appendChild(td);
+                    });
+                    tbody.appendChild(tr);
+                });
+                table.append(thead, tbody);
+                tableWrap.appendChild(table);
+                element.appendChild(tableWrap);
+                const detailsBlock = createDataTableDetailsBlock(details);
+                if (detailsBlock) element.appendChild(detailsBlock);
+                return element;
+            };
+
+            const appendStructuredBlocks = (bubble, blocks) => {
+                blocks.forEach((block) => {
+                    if (!block || typeof block !== "object") {
+                        return;
+                    }
+                    if (block.type === "commentary") {
+                        bubble.appendChild(createCommentaryBlock(block));
+                    } else if (block.type === "data_table") {
+                        bubble.appendChild(createDataTableBlock(block));
+                    }
+                });
+            };
+
+            const renderPersistedMessage = (message) => {
+                if (!message || (message.role !== "user" && message.role !== "assistant")) {
+                    return "";
+                }
+                const wrapper = document.createElement("div");
+                wrapper.className = message.role === "user" ? "chat chat-end" : "chat chat-start";
+                wrapper.dataset.chatPersist = "true";
+                wrapper.dataset.chatRole = message.role;
+                const messageBlocks = message.role === "assistant" && Array.isArray(message.blocks)
+                    ? message.blocks
+                    : [];
+                if (messageBlocks.length) {
+                    wrapper.dataset.chatBlocks = stringifyBlocks(messageBlocks);
+                }
+
+                if (message.role === "assistant") {
+                    const header = document.createElement("div");
+                    header.className = "chat-header text-xs opacity-70 mb-1";
+                    header.textContent = "Dux";
+                    wrapper.appendChild(header);
+                }
+
+                const bubble = document.createElement("div");
+                bubble.className = message.role === "user" ? "chat-bubble chat-bubble-primary" : "chat-bubble";
+                if (messageBlocks.length) {
+                    bubble.className = "chat-bubble max-w-full space-y-3";
+                    appendStructuredBlocks(bubble, messageBlocks);
+                    wrapper.appendChild(bubble);
+                    return wrapper.outerHTML;
+                }
+                const messageText = typeof message.text === "string" ? message.text : "";
+                if (message.role === "assistant") {
+                    bubble.dataset.chatRawText = messageText;
+                }
+                bubble.textContent = messageText;
+                wrapper.appendChild(bubble);
+                return wrapper.outerHTML;
+            };
+
+            const persistTranscript = (chatSessionKey) => {
+                if (!chatSessionKey) {
+                    return;
+                }
+                const root = getChatMessagesRoot();
+                if (!(root instanceof HTMLElement)) {
+                    return;
+                }
+                const messages = Array.from(root.querySelectorAll("[data-chat-persist='true']")).flatMap((node) => {
+                    if (!(node instanceof HTMLElement)) {
+                        return [];
+                    }
+                    const role = node.dataset.chatRole;
+                    if (role === "assistant" && node.dataset.chatBlocks) {
+                        try {
+                            const blocks = JSON.parse(node.dataset.chatBlocks);
+                            return Array.isArray(blocks) && blocks.length ? [{ role, blocks }] : [];
+                        } catch {
+                            return [];
+                        }
+                    }
+                    const bubble = node.querySelector(".chat-bubble");
+                    let text = "";
+                    if (bubble instanceof HTMLElement) {
+                        text = role === "assistant" && bubble.dataset.chatRawText
+                            ? normalizeMessageText(bubble.dataset.chatRawText)
+                            : normalizeMessageText(bubble.innerText || "");
+                    }
+                    if (!text || (role !== "user" && role !== "assistant")) {
+                        return [];
+                    }
+                    return [{ role, text }];
+                });
+                if (messages.length) {
+                    sessionStorage.setItem(getMessagesStorageKey(chatSessionKey), JSON.stringify(messages));
+                    return;
+                }
+                sessionStorage.removeItem(getMessagesStorageKey(chatSessionKey));
+            };
+
+            const scheduleTranscriptPersistence = () => {
+                if (transcriptPersistencePaused || persistTranscriptTimeoutId) {
+                    return;
+                }
+                persistTranscriptTimeoutId = window.setTimeout(() => {
+                    persistTranscriptTimeoutId = 0;
+                    renderAssistantMarkdown();
+                    persistTranscript(sessionStorage.getItem(CHAT_SESSION_STORAGE_KEY) || "");
+                }, MARKDOWN_RENDER_DEBOUNCE_MS);
+            };
+
+            const ensureTranscriptObserver = () => {
+                if (transcriptObserver) {
+                    return;
+                }
+                const root = getChatMessagesRoot();
+                if (!(root instanceof HTMLElement)) {
+                    return;
+                }
+                transcriptObserver = new MutationObserver(() => {
+                    scheduleTranscriptPersistence();
+                });
+                transcriptObserver.observe(root, {
+                    childList: true,
+                    subtree: true,
+                    characterData: true,
+                });
+            };
+
+            const restoreTranscript = (chatSessionKey) => {
+                const root = getChatMessagesRoot();
+                let persistedMessages = null;
+                try {
+                    persistedMessages = JSON.parse(sessionStorage.getItem(getMessagesStorageKey(chatSessionKey)) || "null");
+                } catch {
+                    persistedMessages = null;
+                }
+                if (!(root instanceof HTMLElement) || !Array.isArray(persistedMessages) || !persistedMessages.length) {
+                    return false;
+                }
+                transcriptPersistencePaused = true;
+                root.innerHTML = `${getDefaultChatMarkup()}${persistedMessages.map(renderPersistedMessage).join("")}`;
+                renderAssistantMarkdown();
+                transcriptPersistencePaused = false;
+                return true;
+            };
+
+            const resetVisibleChat = () => {
+                const root = getChatMessagesRoot();
+                if (!(root instanceof HTMLElement)) {
+                    return;
+                }
+                transcriptPersistencePaused = true;
+                root.innerHTML = getDefaultChatMarkup();
+                transcriptPersistencePaused = false;
+            };
+
+            const newChatSessionKey = () => {
+                const bytes = globalThis.crypto && typeof globalThis.crypto.getRandomValues === "function"
+                    ? globalThis.crypto.getRandomValues(new Uint8Array(16))
+                    : Array.from({ length: 16 }, () => Math.floor(Math.random() * 256));
+                const randomPart = globalThis.crypto && typeof globalThis.crypto.randomUUID === "function"
+                    ? globalThis.crypto.randomUUID().replace(/-/g, "")
+                    : Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+                return `chat-${randomPart}`;
+            };
+
+            const startNewChat = () => {
+                const previousChatSessionKey = sessionStorage.getItem(CHAT_SESSION_STORAGE_KEY) || "";
+                if (previousChatSessionKey) {
+                    sessionStorage.removeItem(getMessagesStorageKey(previousChatSessionKey));
+                    sessionStorage.removeItem(getUsageStorageKey(previousChatSessionKey));
+                }
+                const nextChatSessionKey = newChatSessionKey();
+                sessionStorage.setItem(CHAT_SESSION_STORAGE_KEY, nextChatSessionKey);
+                resetVisibleChat();
+                return nextChatSessionKey;
+            };
+
+            document.addEventListener("click", (event) => {
+                const target = event.target instanceof Element ? event.target : null;
+                const tableButton = target ? target.closest("[data-table-copy-button]") : null;
+                if (tableButton instanceof HTMLButtonElement) {
+                    event.preventDefault();
+                    copyDataTableToClipboard(tableButton);
+                    return;
+                }
+                const sqlButton = target ? target.closest("[data-sql-copy-button]") : null;
+                if (sqlButton instanceof HTMLButtonElement) {
+                    event.preventDefault();
+                    copySqlToClipboard(sqlButton);
+                }
+            });
+
+            window.aiChatSessionUi = {
+                ensureTranscriptObserver,
+                loadUsageState,
+                markdownRenderingAvailable,
+                newChatSessionKey,
+                restoreTranscript,
+                startNewChat,
+            };
+        })();
+    </script>
+
+    <div
+            id="chat-app"
+            class="flex mx-2 h-[calc(100dvh-5.7rem)] min-h-0 flex-col md:mx-4 md:h-[calc(100dvh-6.7rem)] lg:mx-6 lg:h-[calc(100dvh-6.7rem)] xl:mx-8"
+            data-signals="{ isWaitingResponse: false, thinkingSeconds: 0, UserFacingProgressMessage: 'думает...', ThemeSwitchCommand: '', LatestUsageModel: '{{ ai_model_name|escapejs }}', sessionInputTokens: 0, sessionInputTokensText: '0', sessionOutputTokens: 0, sessionOutputTokensText: '0', sessionTotalTokens: 0, sessionHasCost: false, sessionCostUsd: 0, sessionCostUsdText: '0', sessionTokenBadgeText: '' }"
+            data-signals:chat-session-key__ifmissing="sessionStorage.getItem('chatSessionKey') || window.aiChatSessionUi.newChatSessionKey()"
+            data-init="if ($chatSessionKey) sessionStorage.setItem('chatSessionKey', $chatSessionKey); window.aiChatSessionUi.ensureTranscriptObserver(); window.aiChatSessionUi.restoreTranscript($chatSessionKey); const usage = window.aiChatSessionUi.loadUsageState($chatSessionKey); $LatestUsageModel = usage.LatestUsageModel || $LatestUsageModel; $sessionInputTokens = usage.sessionInputTokens || 0; $sessionInputTokensText = usage.sessionInputTokensText || '0'; $sessionOutputTokens = usage.sessionOutputTokens || 0; $sessionOutputTokensText = usage.sessionOutputTokensText || '0'; $sessionTotalTokens = usage.sessionTotalTokens || 0; $sessionHasCost = !!usage.sessionHasCost; $sessionCostUsd = usage.sessionCostUsd || 0; $sessionCostUsdText = usage.sessionCostUsdText || '0'; $sessionTokenBadgeText = usage.sessionTokenBadgeText || '';"
+            data-effect="if ($chatSessionKey) sessionStorage.setItem('chatSessionKey', $chatSessionKey); sessionStorage.setItem(`chat-ui:${$chatSessionKey}:usage`, JSON.stringify({ LatestUsageModel: $LatestUsageModel, sessionInputTokens: $sessionInputTokens, sessionInputTokensText: $sessionInputTokensText, sessionOutputTokens: $sessionOutputTokens, sessionOutputTokensText: $sessionOutputTokensText, sessionTotalTokens: $sessionTotalTokens, sessionHasCost: $sessionHasCost, sessionCostUsd: $sessionCostUsd, sessionCostUsdText: $sessionCostUsdText, sessionTokenBadgeText: $sessionTokenBadgeText }));"
+            data-on:ai-new-chat-requested="if ($isWaitingResponse) return; $chatSessionKey = window.aiChatSessionUi.startNewChat(); $userInput = ''; $thinkingSeconds = 0; $UserFacingProgressMessage = 'думает...'; $LatestUsageModel = '{{ ai_model_name|escapejs }}'; $sessionInputTokens = 0; $sessionInputTokensText = '0'; $sessionOutputTokens = 0; $sessionOutputTokensText = '0'; $sessionTotalTokens = 0; $sessionHasCost = false; $sessionCostUsd = 0; $sessionCostUsdText = '0'; $sessionTokenBadgeText = '';"
+    >
+        <div class="mb-2 flex items-start justify-between gap-3 md:mb-3">
+            <h3 class="text-xl font-semibold leading-tight tracking-tight md:text-2xl">
+                Умный помощник по работе с данными
+            </h3>
+            <div class="mt-1 flex shrink-0 items-center gap-2">
+                <div class="dropdown dropdown-end dropdown-hover" style="display: none" data-show="$sessionTotalTokens > 0">
+                    <button type="button"
+                            tabindex="0"
+                            class="badge badge-outline badge-sm border-base-300 bg-base-100/80 font-mono tabular-nums text-xs opacity-80 transition-opacity hover:opacity-100 focus-visible:opacity-100"
+                            aria-label="Показать расход токенов за сессию"
+                            data-text="$sessionTokenBadgeText">
+                        0 ток
+                    </button>
+                    <div tabindex="0" class="dropdown-content z-20 mt-2 w-48 rounded-box border border-base-300 bg-base-100/95 p-3 text-sm shadow-xl backdrop-blur">
+                        <div class="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] opacity-50">Токены (сессия)</div>
+                        <div class="mb-3 rounded-md bg-base-200/70 px-2 py-1 text-[11px] leading-tight opacity-65"
+                             style="display: none"
+                             data-show="$LatestUsageModel">
+                            <span class="mr-1 uppercase tracking-[0.14em]">Модель</span>
+                            <span class="font-mono break-all" data-text="$LatestUsageModel">{{ ai_model_name }}</span>
+                        </div>
+                        <div class="flex items-center justify-between gap-3">
+                            <span class="opacity-70">Входящие</span>
+                            <span class="font-mono tabular-nums" data-text="$sessionInputTokensText">0</span>
+                        </div>
+                        <div class="mt-1 flex items-center justify-between gap-3">
+                            <span class="opacity-70">Исходящие</span>
+                            <span class="font-mono tabular-nums" data-text="$sessionOutputTokensText">0</span>
+                        </div>
+                        <div class="mt-2 border-t border-base-300 pt-2" style="display: none" data-show="$sessionHasCost">
+                            <div class="flex items-center justify-between gap-3">
+                                <span class="opacity-70">Стоимость</span>
+                                <span class="font-mono tabular-nums">$<span data-text="$sessionCostUsdText">0</span></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <button
+                        type="button"
+                        class="btn btn-outline btn-info btn-sm shrink-0"
+                        onclick="document.getElementById('demoHelpModal').showModal()"
+                        aria-label="Показать подсказки"
+                >
+                    Подсказки
+                </button>
+            </div>
+        </div>
+
+        <dialog class="modal" id="demoHelpModal">
+            <div class="modal-box max-w-3xl">
+                <h5 class="text-lg font-semibold" id="demoHelpModalLabel">Подсказки</h5>
+                <p class="mb-3 mt-2 text-sm opacity-70">Как получить более полезный ответ</p>
+                <ul class="mb-3 list-disc space-y-2 pl-5 text-sm leading-6">
+                    <li>VPN не нужен.</li>
+                    <li>Ответы нужно перепроверять: как и любая нейросеть, Dux может ошибаться.</li>
+                    <li>По возможности давайте больше контекста: источник, таблицу, поля, период, метрику и нужный формат ответа.</li>
+                    <li>Если название клиента, товара или категории может отличаться, попросите учесть варианты написания.</li>
+                    <li>
+                        По умолчанию робот показывает до 50 строк. Если нужно больше, скажите число: «покажи 200».
+                    </li>
+                    <li>Если ответ не пришел или выглядит странно, попробуйте задать вопрос еще раз.</li>
+                    <li>Если нужно резко сменить задачу, начните новый чат, чтобы не путать с предыдущим запросом.</li>
+                    <li>Если робот повторяется, подождите. Если не помогает, начните новый чат.</li>
+                </ul>
+                <div class="alert alert-info" role="alert">
+                    Робот помнит текущий разговор в рамках активной вкладки браузера. В новой вкладке начнется новая сессия.
+                    Также можно начать новую сессию с помощью кнопки «Новый чат».
+                </div>
+                <div class="mt-3">
+                    <div class="mb-2 font-semibold">Примеры запросов для старта:</div>
+                    <ul class="list-decimal space-y-2 pl-5 text-sm leading-6">
+                        <li>Проследи тенденции продаж по количеству и сумме продаж за последние 30 дней и сделай выводы.</li>
+                        <li>Покажи топ-10 клиентов за последние 7 дней по общей сумме заказов.</li>
+                        <li>Сравни продажи по регионам за последние 30 дней по количеству и выручке.</li>
+                        <li>Покажи топ-10 товаров по количеству продаж за последние 2 недели.</li>
+                        <li>Покажи средний чек и число заказов по месяцам за текущий год.</li>
+                        <li>Найди категории товаров, в которых продажи снизились относительно прошлого месяца.</li>
+                        <li>Покажи 20 заказов с самой большой суммой за последний месяц.</li>
+                    </ul>
+                </div>
+                <div class="modal-action">
+                    <form method="dialog">
+                        <button type="submit" class="btn">Понятно</button>
+                    </form>
+                </div>
+            </div>
+            <form method="dialog" class="modal-backdrop">
+                <button aria-label="Закрыть">Закрыть</button>
+            </form>
+        </dialog>
+
+        <template id="chat-default-content-template">
+            <div class="chat chat-start" data-chat-static="true">
+                <div class="chat-header mb-1 text-xs opacity-70">Dux</div>
+                <div class="chat-bubble text-sm leading-6 md:text-base">Привет, {{ request.user }}! Задавай вопрос.</div>
+            </div>
+            <div class="flex flex-wrap items-center gap-2" data-chat-static="true">
+                <div class="text-xs opacity-70 md:text-sm">Хочешь быстро понять мои возможности? Кликай на</div>
+                <button
+                        data-attr:disabled="$isWaitingResponse"
+                        type="button"
+                        class="btn btn-success btn-sm"
+                        data-indicator:is-waiting-response
+                        data-on:click="if ($isWaitingResponse) return; $userInput='Коротко опиши, что ты умеешь. Дай 5-7 пунктов и 3 примера вопросов о продажах, заказах, клиентах, товарах и остатках. Также укажи свои ограничения.'; @get('{% url "run_chat" %}', { openWhenHidden: true }); $userInput='';"
+                >
+                    Что ты умеешь?
+                </button>
+            </div>
+        </template>
+
+        <div class="card min-h-0 flex-1 border border-base-300 bg-base-100 shadow-sm">
+            <span id="theme-switch-cmd" data-text="$ThemeSwitchCommand" hidden></span>
+            <div class="card-body min-h-0 gap-3 overflow-hidden p-3 md:p-4">
+                <div id="chat-window" class="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto md:pr-1">
+                    <div id="chat-messages" class="flex flex-col gap-3">
+                        <div class="chat chat-start" data-chat-static="true">
+                            <div class="chat-header mb-1 text-xs opacity-70">Dux</div>
+                            <div class="chat-bubble text-sm leading-6 md:text-base">Привет, {{ request.user }}! Задавай вопрос.</div>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2" data-chat-static="true">
+                            <div class="text-xs opacity-70 md:text-sm">Хочешь быстро понять мои возможности? Кликай на</div>
+                            <button
+                                    data-attr:disabled="$isWaitingResponse"
+                                    type="button"
+                                    class="btn btn-success btn-sm"
+                                    data-indicator:is-waiting-response
+                                    data-on:click="if ($isWaitingResponse) return; $userInput='Коротко опиши, что ты умеешь. Дай 5-7 пунктов и 3 примера вопросов о продажах, заказах, клиентах, товарах и остатках. Также укажи свои ограничения.'; @get('{% url "run_chat" %}', { openWhenHidden: true }); $userInput='';"
+                            >
+                                Что ты умеешь?
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="alert alert-info py-2 text-sm" style="display: none" data-show="$isWaitingResponse">
+                    <div class="flex flex-wrap items-center gap-x-1.5 gap-y-1">
+                        <span>Dux</span>
+                        <span class="font-medium" data-text="$UserFacingProgressMessage">думает...</span>
+                        <span class="badge badge-ghost badge-sm font-mono tabular-nums opacity-70">
+                            <span data-text="$thinkingSeconds">0</span> сек.
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-base-300 bg-base-200 p-3 md:p-4" style="position: sticky; bottom: 0; z-index: 1;">
+                <form class="flex items-end gap-2" autocomplete="off" data-on:submit="evt.preventDefault(); if ($isWaitingResponse) return; @get('{% url "run_chat" %}', { openWhenHidden: true }); $userInput='';" data-indicator:is-waiting-response>
+                    <textarea
+                            data-bind:user-input
+                            class="textarea textarea-bordered w-full min-h-0 leading-6"
+                            placeholder="Введите сообщение..."
+                            aria-label="Сообщение"
+                            data-on:keydown="if (evt.key === 'Enter' && !evt.shiftKey) { evt.preventDefault(); if ($isWaitingResponse) return; evt.target.form.requestSubmit(); }"
+                            autofocus
+                            rows="1"
+                            style="field-sizing: content;"
+                    ></textarea>
+                    <button data-attr:disabled="$isWaitingResponse" type="submit" class="btn btn-primary btn-sm md:btn-md">
+                        Отправить
+                    </button>
+                </form>
+                <div class="mt-1 text-xs opacity-60">Enter — отправить, Shift+Enter — новая строка.</div>
+            </div>
+        </div>
+    </div>
+
+{% endblock content %}

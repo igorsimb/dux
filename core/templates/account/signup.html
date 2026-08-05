@@ -1,0 +1,87 @@
+{% extends "core/base.html" %}
+
+{% block title %}Регистрация | Dux{% endblock %}
+
+{% block content %}
+    <div class="mx-auto flex w-full max-w-md flex-col gap-5 py-8 md:py-12">
+        <div class="text-center">
+            <h1 class="text-2xl font-semibold tracking-tight md:text-3xl">Регистрация</h1>
+            <p class="mt-2 text-sm opacity-70">Создайте аккаунт для доступа к чату Dux</p>
+        </div>
+
+        <div class="card border border-base-300 bg-base-100 shadow-sm">
+            <div class="card-body gap-5 p-5 md:p-6">
+                {% if form.non_field_errors %}
+                    <div class="alert alert-error py-2 text-sm">
+                        <ul class="list-disc pl-5">
+                            {% for error in form.non_field_errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+
+                <form method="post" action="{% url 'account_signup' %}" class="space-y-5">
+                    {% csrf_token %}
+
+                    <label class="form-control w-full gap-1">
+                        <span class="label"><span class="label-text">Email</span></span>
+                        <input
+                            type="email"
+                            name="email"
+                            autocomplete="email"
+                            required
+                            class="input input-bordered w-full"
+                            value="{{ form.email.value|default:'' }}"
+                            placeholder="name@company.ru"
+                        >
+                        {% if form.email.errors %}
+                            <span class="label"><span class="label-text-alt text-error">{{ form.email.errors|join:", " }}</span></span>
+                        {% endif %}
+                    </label>
+
+                    <label class="form-control w-full gap-1">
+                        <span class="label"><span class="label-text">Пароль</span></span>
+                        <input
+                            type="password"
+                            name="password1"
+                            autocomplete="new-password"
+                            required
+                            class="input input-bordered w-full"
+                            placeholder="Придумайте пароль"
+                        >
+                        {% if form.password1.errors %}
+                            <span class="label"><span class="label-text-alt text-error">{{ form.password1.errors|join:", " }}</span></span>
+                        {% endif %}
+                    </label>
+
+                    <label class="form-control w-full gap-1">
+                        <span class="label"><span class="label-text">Повторите пароль</span></span>
+                        <input
+                            type="password"
+                            name="password2"
+                            autocomplete="new-password"
+                            required
+                            class="input input-bordered w-full"
+                            placeholder="Повторите пароль"
+                        >
+                        {% if form.password2.errors %}
+                            <span class="label"><span class="label-text-alt text-error">{{ form.password2.errors|join:", " }}</span></span>
+                        {% endif %}
+                    </label>
+
+                    {% if redirect_field_value %}
+                        <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}">
+                    {% endif %}
+
+                    <button type="submit" class="btn btn-primary mt-2 w-full">Зарегистрироваться</button>
+                </form>
+
+                <div class="mt-1 text-center text-sm opacity-70">
+                    Уже есть аккаунт?
+                    <a href="{% url 'account_login' %}" class="link link-primary">Войти</a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}

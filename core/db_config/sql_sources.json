@@ -1,0 +1,28 @@
+{
+  "sources": [
+    {
+      "id": "clickhouse_default",
+      "dialect": "clickhouse",
+      "driver": "clickhouse",
+      "env": {
+        "host": "CLICKHOUSE_HOST",
+        "port": "CLICKHOUSE_PORT",
+        "user": "CLICKHOUSE_USER",
+        "password": "CLICKHOUSE_PASSWORD"
+      },
+      "default_database": "default"
+    },
+    {
+      "id": "mssql_default",
+      "dialect": "tsql",
+      "driver": "mssql",
+      "env": {
+        "host": "MSSQL_HOST",
+        "port": "MSSQL_PORT",
+        "user": "MSSQL_USER",
+        "password": "MSSQL_PASSWORD",
+        "database": "MSSQL_DATABASE"
+      }
+    }
+  ]
+}

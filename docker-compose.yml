@@ -1,0 +1,19 @@
+services:
+  web:
+    build: .
+    ports:
+      - "${APP_PORT:-8012}:8000"
+    env_file:
+      - .env
+    environment:
+      DJANGO_ALLOWED_HOSTS: "*"
+      DJANGO_DEBUG: "1"
+      SQLITE_PATH: "/data/db.sqlite3"
+    volumes:
+      - db_data:/data
+      - ./chatlogs:/app/chatlogs
+      - ./logs:/app/logs
+    restart: unless-stopped
+
+volumes:
+  db_data:
