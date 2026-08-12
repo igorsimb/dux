@@ -42,7 +42,6 @@ The implementation groups messages around the practical steps a user is waiting 
 - SQL validation, including retry hints when a query is rejected and rewritten
 - validated SQL execution, including token problems, DB connection/configuration issues, waiting for the database,
   database errors, and final result analysis
-- a demo-only favorite-color tool path used by `get_user_favorite_color`
 
 Each stage has a set of short Russian phrases. The helper chooses one at random at runtime, so repeated turns do not
 show the exact same wording every time.

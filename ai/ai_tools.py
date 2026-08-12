@@ -31,19 +31,15 @@ from ai.ai_utils.structured_output_blocks import (
 )
 from ai.ai_utils.progress_messages import (
     ExecuteValidatedSqlStage,
-    FavoriteColorStage,
     GetTableDescriptionsStage,
     GetTableMetadataStage,
     ValidateSqlStage,
     execute_validated_sql_message,
-    favorite_color_message,
     get_table_descriptions_message,
     get_table_metadata_message,
     show_progress_message,
     validate_sql_message,
 )
-
-USER_FAV_COLOR = "bright green"
 
 
 class SubmitModelResponseLayoutArgs(BaseModel):
@@ -97,21 +93,6 @@ def _get_explicit_query_row_limit(query: str, dialect: str | None) -> int | None
 def ask_user(question: str) -> str:
     """Ask one Russian question when missing information would materially change the SQL or result."""
     return question
-
-
-@tool
-def get_user_favorite_color() -> str | None:
-    """Return the user's favorite color."""
-    writer = get_stream_writer()
-    show_progress_message(
-        writer=writer,
-        stage=favorite_color_message(FavoriteColorStage.START),
-    )
-    show_progress_message(
-        writer=writer,
-        stage=favorite_color_message(FavoriteColorStage.FOUND),
-    )
-    return USER_FAV_COLOR
 
 
 @tool

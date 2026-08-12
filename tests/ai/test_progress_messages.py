@@ -162,37 +162,12 @@ def test_execute_validated_sql_message_uses_selected_stage_bucket(
 
 
 @pytest.mark.parametrize(
-    ("stage", "expected_bucket"),
-    [
-        (
-            pm.FavoriteColorStage.START,
-            pm._FAVORITE_COLOR_MESSAGES[pm.FavoriteColorStage.START],
-        ),
-        (
-            pm.FavoriteColorStage.FOUND,
-            pm._FAVORITE_COLOR_MESSAGES[pm.FavoriteColorStage.FOUND],
-        ),
-    ],
-)
-def test_favorite_color_message_uses_selected_stage_bucket(
-    monkeypatch,
-    stage,
-    expected_bucket,
-) -> None:
-    """Demo selector follows the same stage-scoped random-choice contract."""
-    _assert_stage_selector(
-        monkeypatch, pm.favorite_color_message, stage, expected_bucket
-    )
-
-
-@pytest.mark.parametrize(
     "catalog",
     [
         pm._GET_TABLE_DESCRIPTIONS_MESSAGES,
         pm._GET_TABLE_METADATA_MESSAGES,
         pm._VALIDATE_SQL_MESSAGES,
         pm._EXECUTE_VALIDATED_SQL_MESSAGES,
-        pm._FAVORITE_COLOR_MESSAGES,
     ],
 )
 def test_message_catalog_contains_only_non_empty_strings(catalog) -> None:

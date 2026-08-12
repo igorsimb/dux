@@ -36,8 +36,6 @@ Stage semantics (runtime meaning):
 - ExecuteValidatedSqlStage.FINAL_ANALYSIS:
   Called after successful DB result is received and before returning ToolMessage.
 
-- FavoriteColorStage.START / FavoriteColorStage.FOUND:
-  Demo-only stages for `get_user_favorite_color`.
 """
 
 from __future__ import annotations
@@ -82,13 +80,6 @@ class ExecuteValidatedSqlStage(str, Enum):
     DB_WAITING = "db_waiting"
     DB_ERROR = "db_error"
     FINAL_ANALYSIS = "final_analysis"
-
-
-class FavoriteColorStage(str, Enum):
-    """Demo stages for favorite-color lookup progress."""
-
-    START = "start"
-    FOUND = "found"
 
 
 # Extend the tuples of any stage. Message for corresponding stage will be picked at random at runtime.
@@ -391,12 +382,6 @@ _EXECUTE_VALIDATED_SQL_MESSAGES: dict[ExecuteValidatedSqlStage, tuple[str, ...]]
     ),
 }
 
-_FAVORITE_COLOR_MESSAGES: dict[FavoriteColorStage, tuple[str, ...]] = {
-    FavoriteColorStage.START: ("Ищу любимый цвет пользователя",),
-    FavoriteColorStage.FOUND: ("Нашел любимый цвет",),
-}
-
-
 def show_progress_message(*, writer: Callable[[str], None], stage: str) -> None:
     """Emit a user-facing progress message via LangGraph stream writer."""
     text = stage.strip() if isinstance(stage, str) else ""
@@ -439,8 +424,3 @@ def validate_sql_message(stage: ValidateSqlStage) -> str:
 def execute_validated_sql_message(stage: ExecuteValidatedSqlStage) -> str:
     """Return one random phrase for a validated-SQL execution stage."""
     return _pick_stage_message(_EXECUTE_VALIDATED_SQL_MESSAGES, stage)
-
-
-def favorite_color_message(stage: FavoriteColorStage) -> str:
-    """Return one random phrase for the demo favorite-color stage."""
-    return _pick_stage_message(_FAVORITE_COLOR_MESSAGES, stage)
