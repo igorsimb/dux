@@ -21,7 +21,6 @@ def test_build_model_and_tools_registers_query_tools_for_all_sources(
     )
     monkeypatch.setattr(chat_runtime, "get_model_name", lambda: "gpt-test")
     monkeypatch.setattr(chat_runtime, "get_openai_proxy", lambda: None)
-    monkeypatch.setattr(chat_runtime, "get_enable_streaming", lambda: True)
     monkeypatch.setattr(
         chat_runtime,
         "init_chat_model",
@@ -54,11 +53,10 @@ def test_build_model_and_tools_registers_query_tools_for_all_sources(
         lambda db, model: (["sql_tools"], f"list:{db}", f"schema:{db}", f"run:{db}"),
     )
 
-    model, tools, enable_streaming, model_name = chat_runtime.build_model_and_tools(120)
+    model, tools, model_name = chat_runtime.build_model_and_tools(120)
 
     assert model == "model"
     assert model_name == "gpt-test"
-    assert enable_streaming is True
     assert init_chat_model_calls == [
         {
             "model": "gpt-test",
@@ -89,7 +87,6 @@ def test_build_model_and_tools_omits_schema_tools_for_single_source(
     )
     monkeypatch.setattr(chat_runtime, "get_model_name", lambda: "gpt-test")
     monkeypatch.setattr(chat_runtime, "get_openai_proxy", lambda: None)
-    monkeypatch.setattr(chat_runtime, "get_enable_streaming", lambda: True)
     monkeypatch.setattr(chat_runtime, "init_chat_model", lambda **kwargs: "model")
     monkeypatch.setattr(
         chat_runtime,
@@ -111,9 +108,7 @@ def test_build_model_and_tools_omits_schema_tools_for_single_source(
         lambda db, model: (["sql_tools"], f"list:{db}", f"schema:{db}", f"run:{db}"),
     )
 
-    _model, tools, _enable_streaming, _model_name = chat_runtime.build_model_and_tools(
-        120
-    )
+    _model, tools, _model_name = chat_runtime.build_model_and_tools(120)
 
     assert "list:db:clickhouse_default" not in tools
     assert "schema:db:clickhouse_default" not in tools

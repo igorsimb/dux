@@ -53,13 +53,11 @@ def test_run_chat_session_passes_explicit_thread_id_to_streaming(monkeypatch) ->
     monkeypatch.setattr(
         chat_runtime,
         "build_model_and_tools",
-        lambda stream_timeout_seconds: ("model", ["tool"], True, "gpt-test"),
+        lambda stream_timeout_seconds: ("model", ["tool"], "gpt-test"),
     )
     monkeypatch.setattr(chat_runtime, "build_chat_agent", lambda model, tools: "agent")
 
-    async def fake_stream(
-        agent, user_text, robot_id, thread_id, queue, *, model_name, enable_streaming
-    ) -> None:
+    async def fake_stream(agent, user_text, robot_id, thread_id, queue, *, model_name) -> None:
         captured.update(
             {
                 "agent": agent,
@@ -67,7 +65,6 @@ def test_run_chat_session_passes_explicit_thread_id_to_streaming(monkeypatch) ->
                 "robot_id": robot_id,
                 "thread_id": thread_id,
                 "model_name": model_name,
-                "enable_streaming": enable_streaming,
             }
         )
 
@@ -95,7 +92,6 @@ def test_run_chat_session_passes_explicit_thread_id_to_streaming(monkeypatch) ->
         "robot_id": "robot-async-1",
         "thread_id": "thread-async-1",
         "model_name": "gpt-test",
-        "enable_streaming": True,
     }
     assert items == [None]
 

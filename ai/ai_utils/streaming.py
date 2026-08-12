@@ -591,7 +591,6 @@ async def produce_agent_stream_async(
     queue: asyncio.Queue[Any],
     *,
     model_name: str,
-    enable_streaming: bool = True,
 ) -> None:
     """Run the graph asynchronously and put assistant events into the queue."""
     if not get_api_key():
@@ -638,159 +637,116 @@ async def produce_agent_stream_async(
             "chat.agent",
             "started",
             thread=build_short_log_id(thread_id),
-            streaming=enable_streaming,
         )
     )
 
-    if enable_streaming:
-        visible_streamed_text = ""
-        final_text = ""
-        model_response_layout: AgentCommentaryResponse | None = None
-        response_blocks: list[dict[str, Any]] | None = None
-        interrupted_questions: list[str] = []
-        logged_message_count = baseline_message_count
-        async for chunk in agent.astream(
-            graph_input,
-            config=config,
-            stream_mode=["messages", "custom", "values"],
-            version="v2",
-        ):
-            stream_chunk = unpack_stream_chunk(chunk)
-            if stream_chunk is None:
-                logger.debug(format_log_event("chat.graph", "chunk_ignored", chunk_type=type(chunk).__name__))
-                continue
-            mode, data = stream_chunk
-            if mode == "values":
-                state = extract_state_value(data)
-                interrupts = getattr(data, "interrupts", ())
-                if isinstance(data, dict):
-                    interrupts = data.get("__interrupt__") or data.get("interrupts") or interrupts
-                logger.debug(
-                    format_log_event(
-                        "chat.graph",
-                        "state_received",
-                        messages=count_state_messages(state),
-                        layout=extract_model_response_layout(state) is not None,
-                        sql_blocks=count_sql_result_blocks(state),
-                        interrupts=len(interrupts or ()),
-                    )
-                )
-                logged_message_count = log_new_state_messages(state, logged_message_count)
-            if mode == "messages":
-                token, _metadata = data
-                if isinstance(token, AIMessageChunk) and token.text:
-                    token_text = token.text
-                    visible_streamed_text += token_text
-                    await queue.put({"kind": "token", "text": token_text})
-            elif mode == "custom":
-                if isinstance(data, dict) and data.get("kind") == "theme":
-                    theme = str(data.get("theme") or "").strip()
-                    if theme:
-                        logger.debug(format_log_event("tool.ui", "theme_switch", theme=theme))
-                        await queue.put({"kind": "theme", "theme": theme})
-                elif isinstance(data, str) and data.strip():
-                    await queue.put({"kind": "progress", "text": data.strip()})
-            elif mode == "values":
-                questions = extract_ask_user_questions_from_interrupts(getattr(data, "interrupts", ()))
-                if not questions and isinstance(data, dict):
-                    questions = extract_ask_user_questions_from_interrupts(data.get("__interrupt__"))
-                if questions:
-                    interrupted_questions = questions
-                    break
-                current_model_response_layout = extract_model_response_layout(data)
-                if current_model_response_layout is not None:
-                    if is_current_run_model_response_layout(
-                        data,
-                        current_model_response_layout,
-                        baseline_model_response_layout,
-                        baseline_message_count,
-                        baseline_sql_result_block_count,
-                    ):
-                        model_response_layout = current_model_response_layout
-                        render_state = with_fresh_sql_result_blocks(data, baseline_sql_result_block_count)
-                        response_blocks = build_final_response_blocks(render_state, model_response_layout)
-                        logger.debug(format_log_event("tool.ui", "layout_accepted"))
-                    else:
-                        logger.debug(format_log_event("tool.ui", "layout_rejected", reason="stale_checkpoint"))
-                fresh_final_text = extract_fresh_final_ai_text(data, baseline_message_count)
-                if fresh_final_text:
-                    final_text = fresh_final_text
-                elif extract_final_ai_text(data):
-                    logger.debug(format_log_event("chat.message", "final_text_rejected", reason="not_fresh"))
-        if not interrupted_questions:
-            interrupted_questions = await get_checkpointed_ask_user_questions(agent, config)
-        if interrupted_questions:
-            question_text = build_ask_user_message(interrupted_questions)
-            if question_text:
-                await queue.put({"kind": "token", "text": question_text})
-            await emit_usage_event_async(usage_callback, model_name, queue)
-            logger.debug(format_log_event("chat.graph", "interrupted", thread=build_short_log_id(thread_id)))
-            logger.debug(format_log_event("chat.request", "hitl_waiting", thread=build_short_log_id(thread_id)))
-            return
-        if model_response_layout is not None:
-            logger.debug(format_log_event("tool.ui", "layout_ready", blocks=len(model_response_layout.blocks)))
-            await queue.put({"kind": "blocks", "blocks": response_blocks or []})
-        else:
-            final_state = await get_checkpoint_state_value(agent, config)
-            final_sql_result_block_count = count_sql_result_blocks(final_state)
-            log = logger.warning if final_sql_result_block_count > baseline_sql_result_block_count else logger.debug
-            log(
+    visible_streamed_text = ""
+    final_text = ""
+    model_response_layout: AgentCommentaryResponse | None = None
+    response_blocks: list[dict[str, Any]] | None = None
+    interrupted_questions: list[str] = []
+    logged_message_count = baseline_message_count
+    async for chunk in agent.astream(
+        graph_input,
+        config=config,
+        stream_mode=["messages", "custom", "values"],
+        version="v2",
+    ):
+        stream_chunk = unpack_stream_chunk(chunk)
+        if stream_chunk is None:
+            logger.debug(format_log_event("chat.graph", "chunk_ignored", chunk_type=type(chunk).__name__))
+            continue
+        mode, data = stream_chunk
+        if mode == "values":
+            state = extract_state_value(data)
+            interrupts = getattr(data, "interrupts", ())
+            if isinstance(data, dict):
+                interrupts = data.get("__interrupt__") or data.get("interrupts") or interrupts
+            logger.debug(
                 format_log_event(
-                    "tool.ui",
-                    "layout_missing",
-                    sql_blocks=final_sql_result_block_count,
-                    baseline_sql_blocks=baseline_sql_result_block_count,
-                    final_text_len=len(final_text),
-                    streamed_text_len=len(visible_streamed_text),
-                    messages=count_state_messages(final_state),
-                    final_text_preview=build_log_preview(
-                        extract_latest_fresh_ai_text_preview(final_state, baseline_message_count)
-                    ),
+                    "chat.graph",
+                    "state_received",
+                    messages=count_state_messages(state),
+                    layout=extract_model_response_layout(state) is not None,
+                    sql_blocks=count_sql_result_blocks(state),
+                    interrupts=len(interrupts or ()),
                 )
             )
-            final_text_delta = build_final_text_delta(visible_streamed_text, final_text)
-            if final_text_delta:
-                await queue.put({"kind": "token", "text": final_text_delta})
-        await emit_usage_event_async(usage_callback, model_name, queue)
-        logger.debug(format_log_event("chat.agent", "completed", thread=build_short_log_id(thread_id), mode="stream"))
-        return
-
-    result = await agent.ainvoke(graph_input, config=config, version="v2")
-    await emit_usage_event_async(usage_callback, model_name, queue)
-    logger.debug(format_log_event("chat.agent", "completed", thread=build_short_log_id(thread_id), mode="invoke"))
-
-    interrupted_questions = extract_ask_user_questions_from_interrupts(getattr(result, "interrupts", ()))
-    if not interrupted_questions and isinstance(result, dict):
-        interrupted_questions = extract_ask_user_questions_from_interrupts(result.get("__interrupt__"))
+            logged_message_count = log_new_state_messages(state, logged_message_count)
+        if mode == "messages":
+            token, _metadata = data
+            if isinstance(token, AIMessageChunk) and token.text:
+                token_text = token.text
+                visible_streamed_text += token_text
+                await queue.put({"kind": "token", "text": token_text})
+        elif mode == "custom":
+            if isinstance(data, dict) and data.get("kind") == "theme":
+                theme = str(data.get("theme") or "").strip()
+                if theme:
+                    logger.debug(format_log_event("tool.ui", "theme_switch", theme=theme))
+                    await queue.put({"kind": "theme", "theme": theme})
+            elif isinstance(data, str) and data.strip():
+                await queue.put({"kind": "progress", "text": data.strip()})
+        elif mode == "values":
+            questions = extract_ask_user_questions_from_interrupts(getattr(data, "interrupts", ()))
+            if not questions and isinstance(data, dict):
+                questions = extract_ask_user_questions_from_interrupts(data.get("__interrupt__"))
+            if questions:
+                interrupted_questions = questions
+                break
+            current_model_response_layout = extract_model_response_layout(data)
+            if current_model_response_layout is not None:
+                if is_current_run_model_response_layout(
+                    data,
+                    current_model_response_layout,
+                    baseline_model_response_layout,
+                    baseline_message_count,
+                    baseline_sql_result_block_count,
+                ):
+                    model_response_layout = current_model_response_layout
+                    render_state = with_fresh_sql_result_blocks(data, baseline_sql_result_block_count)
+                    response_blocks = build_final_response_blocks(render_state, model_response_layout)
+                    logger.debug(format_log_event("tool.ui", "layout_accepted"))
+                else:
+                    logger.debug(format_log_event("tool.ui", "layout_rejected", reason="stale_checkpoint"))
+            fresh_final_text = extract_fresh_final_ai_text(data, baseline_message_count)
+            if fresh_final_text:
+                final_text = fresh_final_text
+            elif extract_final_ai_text(data):
+                logger.debug(format_log_event("chat.message", "final_text_rejected", reason="not_fresh"))
     if not interrupted_questions:
         interrupted_questions = await get_checkpointed_ask_user_questions(agent, config)
     if interrupted_questions:
         question_text = build_ask_user_message(interrupted_questions)
         if question_text:
             await queue.put({"kind": "token", "text": question_text})
+        await emit_usage_event_async(usage_callback, model_name, queue)
+        logger.debug(format_log_event("chat.graph", "interrupted", thread=build_short_log_id(thread_id)))
+        logger.debug(format_log_event("chat.request", "hitl_waiting", thread=build_short_log_id(thread_id)))
         return
-
-    result_value = extract_state_value(result)
-    log_new_state_messages(result_value, baseline_message_count)
-    model_response_layout = extract_model_response_layout(result_value)
-    if model_response_layout is not None and is_current_run_model_response_layout(
-        result_value,
-        model_response_layout,
-        baseline_model_response_layout,
-        baseline_message_count,
-        baseline_sql_result_block_count,
-    ):
+    if model_response_layout is not None:
         logger.debug(format_log_event("tool.ui", "layout_ready", blocks=len(model_response_layout.blocks)))
-        render_state = with_fresh_sql_result_blocks(result_value, baseline_sql_result_block_count)
-        await queue.put({"kind": "blocks", "blocks": build_final_response_blocks(render_state, model_response_layout)})
-        return
-    messages_out = result_value.get("messages") if isinstance(result_value, dict) else None
-    if isinstance(messages_out, list):
-        for msg in reversed(messages_out[baseline_message_count:]):
-            if not isinstance(msg, AIMessage) or msg.tool_calls:
-                continue
-            content = extract_ai_message_text(msg)
-            if content:
-                await queue.put({"kind": "token", "text": content})
-                return
-    await queue.put({"kind": "token", "text": ""})
+        await queue.put({"kind": "blocks", "blocks": response_blocks or []})
+    else:
+        final_state = await get_checkpoint_state_value(agent, config)
+        final_sql_result_block_count = count_sql_result_blocks(final_state)
+        log = logger.warning if final_sql_result_block_count > baseline_sql_result_block_count else logger.debug
+        log(
+            format_log_event(
+                "tool.ui",
+                "layout_missing",
+                sql_blocks=final_sql_result_block_count,
+                baseline_sql_blocks=baseline_sql_result_block_count,
+                final_text_len=len(final_text),
+                streamed_text_len=len(visible_streamed_text),
+                messages=count_state_messages(final_state),
+                final_text_preview=build_log_preview(
+                    extract_latest_fresh_ai_text_preview(final_state, baseline_message_count)
+                ),
+            )
+        )
+        final_text_delta = build_final_text_delta(visible_streamed_text, final_text)
+        if final_text_delta:
+            await queue.put({"kind": "token", "text": final_text_delta})
+    await emit_usage_event_async(usage_callback, model_name, queue)
+    logger.debug(format_log_event("chat.agent", "completed", thread=build_short_log_id(thread_id)))

@@ -524,7 +524,6 @@ def test_produce_agent_stream_async_renders_fresh_sql_table_after_prior_table(mo
             "thread-fresh-table",
             queue,
             model_name="gpt-5.4",
-            enable_streaming=True,
         )
         items: list[object] = []
         while not queue.empty():
@@ -616,7 +615,6 @@ def test_produce_agent_stream_async_emits_ask_user_interrupt_question(monkeypatc
             "thread-hitl",
             queue,
             model_name="gpt-5.5",
-            enable_streaming=True,
         )
         items: list[object] = []
         while not queue.empty():
@@ -664,7 +662,6 @@ def test_produce_agent_stream_async_resumes_pending_ask_user_interrupt(monkeypat
             "thread-hitl-resume",
             queue,
             model_name="gpt-5.5",
-            enable_streaming=True,
         )
         items: list[object] = []
         while not queue.empty():
@@ -714,7 +711,6 @@ def test_produce_agent_stream_async_real_agent_resumes_ask_user_with_streaming(m
             "thread-real-hitl-resume",
             queue,
             model_name="gpt-5.5",
-            enable_streaming=True,
         )
         items: list[object] = []
         while not queue.empty():
@@ -761,7 +757,6 @@ def test_produce_agent_stream_async_real_agent_resumes_after_prior_answer(monkey
             "thread-structured-hitl-resume",
             queue,
             model_name="gpt-5.5",
-            enable_streaming=True,
         )
         items: list[object] = []
         while not queue.empty():
@@ -870,7 +865,6 @@ def test_produce_agent_stream_async_resume_continuation_wins_over_stale_checkpoi
             "thread-hitl-lifecycle",
             queue,
             model_name="gpt-5.5",
-            enable_streaming=True,
         )
         items: list[object] = []
         while not queue.empty():
@@ -925,7 +919,6 @@ def test_produce_agent_stream_async_streams_json_text_as_plain_text(monkeypatch)
             "thread-stale-json",
             queue,
             model_name="gpt-5.5",
-            enable_streaming=True,
         )
         items: list[object] = []
         while not queue.empty():
@@ -974,7 +967,6 @@ def test_produce_agent_stream_async_suppresses_stale_final_ai_json_text(monkeypa
             "thread-stale-final-json",
             queue,
             model_name="gpt-5.5",
-            enable_streaming=True,
         )
         items: list[object] = []
         while not queue.empty():
@@ -1022,7 +1014,6 @@ def test_produce_agent_stream_async_uses_explicit_thread_id_not_robot_id(
             "thread-stable-456",
             queue,
             model_name="gpt-5.4",
-            enable_streaming=True,
         )
         items: list[object] = []
         while not queue.empty():
@@ -1081,7 +1072,6 @@ def test_produce_agent_stream_async_falls_back_to_final_ai_message(monkeypatch) 
             "thread-async-1",
             queue,
             model_name="gpt-5.4",
-            enable_streaming=True,
         )
         items: list[object] = []
         while not queue.empty():
@@ -1132,7 +1122,6 @@ def test_produce_agent_stream_async_appends_missing_suffix_when_final_text_exten
             "thread-async-2",
             queue,
             model_name="gpt-5.4",
-            enable_streaming=True,
         )
         items: list[object] = []
         while not queue.empty():
@@ -1197,7 +1186,6 @@ def test_produce_agent_stream_async_falls_back_to_text_block_content(
             "thread-async-3",
             queue,
             model_name="gpt-5.4",
-            enable_streaming=True,
         )
         items: list[object] = []
         while not queue.empty():
@@ -1243,7 +1231,6 @@ def test_produce_agent_stream_async_ignores_malformed_model_response_layout(monk
             "thread-async-malformed-structured",
             queue,
             model_name="gpt-5.4",
-            enable_streaming=True,
         )
         items: list[object] = []
         while not queue.empty():
@@ -1291,7 +1278,6 @@ def test_produce_agent_stream_async_renders_model_response_layout(monkeypatch) -
             "thread-structured-json",
             queue,
             model_name="gpt-5.4",
-            enable_streaming=True,
         )
         items: list[object] = []
         while not queue.empty():
@@ -1349,7 +1335,6 @@ def test_produce_agent_stream_async_streams_pretty_json_text_as_plain_text(monke
             "thread-pretty-structured-json",
             queue,
             model_name="gpt-5.4",
-            enable_streaming=True,
         )
         items: list[object] = []
         while not queue.empty():
@@ -1361,50 +1346,6 @@ def test_produce_agent_stream_async_streams_pretty_json_text_as_plain_text(monke
     assert {"kind": "token", "text": "{\n  "} in items
     assert {"kind": "token", "text": '"blocks": [\n'} in items
     assert {"kind": "token", "text": '{"id":"c1","type":"commentary","content":"Готово"}\n]}'} in items
-    assert not any(isinstance(item, dict) and item.get("kind") == "blocks" for item in items)
-
-
-def test_produce_agent_stream_async_non_stream_ignores_malformed_model_response_layout(monkeypatch) -> None:
-    monkeypatch.setattr(streaming, "get_api_key", lambda: "test-key")
-
-    class FakeUsageMetadataCallbackHandler:
-        def __init__(self) -> None:
-            self.usage_metadata = {
-                "gpt-5.4": {"input_tokens": 8, "output_tokens": 3, "total_tokens": 11}
-            }
-
-    monkeypatch.setattr(
-        streaming,
-        "UsageMetadataCallbackHandler",
-        FakeUsageMetadataCallbackHandler,
-    )
-
-    class FakeAgent:
-        async def ainvoke(self, graph_input, config, version):
-            return {
-                "model_response_layout": {"blocks": [{"type": "unknown"}]},
-                "messages": [streaming.AIMessage(content="Plain fallback reply")],
-            }
-
-    async def exercise() -> list[object]:
-        queue: asyncio.Queue[object] = asyncio.Queue()
-        await streaming.produce_agent_stream_async(
-            FakeAgent(),
-            "hello",
-            "robot-non-stream-malformed-structured",
-            "thread-non-stream-malformed-structured",
-            queue,
-            model_name="gpt-5.4",
-            enable_streaming=False,
-        )
-        items: list[object] = []
-        while not queue.empty():
-            items.append(queue.get_nowait())
-        return items
-
-    items = asyncio.run(exercise())
-
-    assert {"kind": "token", "text": "Plain fallback reply"} in items
     assert not any(isinstance(item, dict) and item.get("kind") == "blocks" for item in items)
 
 
@@ -1450,7 +1391,6 @@ def test_produce_agent_stream_async_keeps_semicolon_tokens_unchanged(
             "thread-async-4",
             queue,
             model_name="gpt-5.4",
-            enable_streaming=True,
         )
         items: list[object] = []
         while not queue.empty():
@@ -1519,7 +1459,6 @@ def test_produce_agent_stream_async_runs_memory_middleware_before_each_model_cal
             "phase3-stream-thread",
             queue,
             model_name="gpt-5.4",
-            enable_streaming=True,
         )
         items: list[object] = []
         while not queue.empty():
@@ -1576,7 +1515,6 @@ def test_produce_agent_stream_async_preserves_checkpointed_validated_queries(
             "phase-final-validated-thread",
             queue,
             model_name="gpt-5.4",
-            enable_streaming=True,
         )
         items: list[object] = []
         while not queue.empty():

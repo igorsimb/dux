@@ -92,8 +92,8 @@ configuration when deterministic tests can cover the risk.
 - `.env` is loaded locally, but secrets and deployment-specific connection values must remain in environment variables.
 - `OPENAI_MODEL` selects the model; `MODEL_NAME` is a legacy fallback. Trust `ai/ai_utils/runtime_config.py` for the
   current default rather than duplicating a model version in new docs or code.
-- `OPENAI_ENABLE_STREAMING` defaults to true. Maintain both streaming and async-invoke fallback behavior when changing
-  response handling.
+- Chat execution always uses agent event streaming. Preserve the `astream` event flow and final-state reconciliation
+  when changing response handling; do not add a non-streaming execution mode.
 - Source JSON maps logical connection fields to environment-variable names. Connector code resolves those names and
   should report missing required configuration precisely without logging secrets.
 - Application data uses SQLite; queried business data stays in external ClickHouse/MSSQL sources. Do not confuse Django

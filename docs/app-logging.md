@@ -149,7 +149,7 @@ Request and agent flow usually starts like this:
 11:10:56.063 DEBUG chat.input       received           len=42 preview="..."
 11:10:56.065 DEBUG chat.request     ready              thread=5f822109 user_len=42
 11:10:56.097 DEBUG chat.agent       tools_ready        count=7
-11:10:56.118 DEBUG chat.agent       started            thread=5f822109 streaming=true
+11:10:56.118 DEBUG chat.agent       started            thread=5f822109
 ```
 
 Graph and message events show how the agent run progresses:

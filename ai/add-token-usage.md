@@ -225,10 +225,9 @@ Edge cases to handle:
 - No usage payload returned.
 - Unknown model pricing.
 - Multiple requests in one page session.
-- Streaming disabled fallback path via `agent.invoke(...)`.
 
 Verify:
-- Both streaming and non-streaming paths still work.
+- Streaming usage reporting still works.
 - README description matches actual behavior.
 
 Testing:

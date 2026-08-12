@@ -95,7 +95,6 @@ Application and model settings:
 - `OPENAI_MODEL`: optional model selection
 - `MODEL_NAME`: legacy fallback for model selection
 - `OPENAI_PROXY`: optional proxy URL
-- `OPENAI_ENABLE_STREAMING`: optional, defaults to enabled
 
 Default ClickHouse source:
 

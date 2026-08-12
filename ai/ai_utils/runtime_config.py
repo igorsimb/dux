@@ -20,12 +20,6 @@ def get_api_key() -> str | None:
     return os.getenv("OPENAI_API_KEY")
 
 
-def get_enable_streaming() -> bool:
-    """Return whether OpenAI token streaming is enabled."""
-    value = (os.getenv("OPENAI_ENABLE_STREAMING") or "true").strip().lower()
-    return value in {"1", "true", "yes", "y", "on"}
-
-
 def get_openai_proxy() -> str | None:
     """Return optional OpenAI proxy URL."""
     return os.getenv("OPENAI_PROXY")

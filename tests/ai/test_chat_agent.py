@@ -457,7 +457,6 @@ def test_streaming_consumers_work_with_agent_builder(monkeypatch) -> None:
             "phase2-stream-thread",
             queue,
             model_name="gpt-5.4",
-            enable_streaming=True,
         )
         items: list[object] = []
         while not queue.empty():
@@ -536,7 +535,6 @@ def test_chat_agent_preserves_sql_result_blocks_for_structured_placeholder_resol
             "thread-sql-result-blocks",
             queue,
             model_name="gpt-5.4",
-            enable_streaming=True,
         )
         items: list[object] = []
         while not queue.empty():
@@ -557,7 +555,7 @@ def test_run_chat_session_uses_chat_agent_builder(monkeypatch) -> None:
     monkeypatch.setattr(
         chat_runtime,
         "build_model_and_tools",
-        lambda stream_timeout_seconds: ("model", ["tool"], True, "gpt-test"),
+        lambda stream_timeout_seconds: ("model", ["tool"], "gpt-test"),
     )
 
     def fake_build_chat_agent(model, tools):
@@ -566,9 +564,7 @@ def test_run_chat_session_uses_chat_agent_builder(monkeypatch) -> None:
 
     monkeypatch.setattr(chat_runtime, "build_chat_agent", fake_build_chat_agent)
 
-    async def fake_stream(
-        agent, user_text, robot_id, thread_id, queue, *, model_name, enable_streaming
-    ) -> None:
+    async def fake_stream(agent, user_text, robot_id, thread_id, queue, *, model_name) -> None:
         captured["stream_agent"] = agent
         captured["thread_id"] = thread_id
 
