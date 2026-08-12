@@ -53,7 +53,6 @@ clickhouse-sqlalchemy==0.3.2
 colorama==0.4.6
     # via
     #   loguru
-    #   pytest
     #   tqdm
 constantly==23.10.4
     # via twisted
@@ -108,8 +107,6 @@ idna==3.11
     #   yarl
 incremental==24.11.0
     # via twisted
-iniconfig==2.3.0
-    # via pytest
 jiter==0.12.0
     # via openai
 jsonpatch==1.33
@@ -192,9 +189,6 @@ packaging==25.0
     #   langchain-core
     #   langsmith
     #   marshmallow
-    #   pytest
-pluggy==1.6.0
-    # via pytest
 propcache==0.4.1
     # via
     #   aiohttp
@@ -222,18 +216,10 @@ pydantic-core==2.41.5
     # via pydantic
 pydantic-settings==2.12.0
     # via langchain-community
-pygments==2.19.2
-    # via pytest
 pyodbc==5.3.0
     # via dux (pyproject.toml)
 pyopenssl==25.3.0
     # via twisted
-pytest==9.0.2
-    # via
-    #   dux (pyproject.toml)
-    #   pytest-django
-pytest-django==4.12.0
-    # via dux (pyproject.toml)
 python-dotenv==1.2.1
     # via
     #   dux (pyproject.toml)

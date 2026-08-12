@@ -49,8 +49,8 @@ def test_build_model_and_tools_registers_query_tools_for_all_sources(
     )
     monkeypatch.setattr(
         chat_runtime,
-        "build_guarded_sql_tools",
-        lambda db, model: (["sql_tools"], f"list:{db}", f"schema:{db}", f"run:{db}"),
+        "build_guarded_query_tool",
+        lambda db: f"run:{db}",
     )
 
     model, tools, model_name = chat_runtime.build_model_and_tools(120)
@@ -71,13 +71,11 @@ def test_build_model_and_tools_registers_query_tools_for_all_sources(
     assert db_calls == []
     assert registrations == []
     assert factory_registrations == ["clickhouse_default", "mssql_default"]
-    assert "list:db:clickhouse_default" not in tools
-    assert "schema:db:clickhouse_default" not in tools
     assert chat_runtime.ask_user in tools
     assert chat_runtime.submit_model_response_layout in tools
 
 
-def test_build_model_and_tools_omits_schema_tools_for_single_source(
+def test_build_model_and_tools_registers_query_tool_for_single_source(
     monkeypatch,
 ) -> None:
     monkeypatch.setattr(
@@ -94,8 +92,11 @@ def test_build_model_and_tools_omits_schema_tools_for_single_source(
         lambda source_id: f"db:{source_id}",
     )
     monkeypatch.setattr(chat_runtime, "clear_run_query_tools", lambda: None)
+    registrations: list[tuple[str, str]] = []
     monkeypatch.setattr(
-        chat_runtime, "set_run_query_tool_for_source", lambda source_id, tool: None
+        chat_runtime,
+        "set_run_query_tool_for_source",
+        lambda source_id, tool: registrations.append((source_id, tool)),
     )
     monkeypatch.setattr(
         chat_runtime,
@@ -104,14 +105,13 @@ def test_build_model_and_tools_omits_schema_tools_for_single_source(
     )
     monkeypatch.setattr(
         chat_runtime,
-        "build_guarded_sql_tools",
-        lambda db, model: (["sql_tools"], f"list:{db}", f"schema:{db}", f"run:{db}"),
+        "build_guarded_query_tool",
+        lambda db: f"run:{db}",
     )
 
     _model, tools, _model_name = chat_runtime.build_model_and_tools(120)
 
-    assert "list:db:clickhouse_default" not in tools
-    assert "schema:db:clickhouse_default" not in tools
+    assert registrations == [("clickhouse_default", "run:db:clickhouse_default")]
     assert chat_runtime.ask_user in tools
     assert chat_runtime.submit_model_response_layout in tools
 

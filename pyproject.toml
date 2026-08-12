@@ -17,12 +17,16 @@ dependencies = [
     "langchain-openai>=1.2.2",
     "langgraph>=1.2.4",
     "loguru>=0.7.3",
-    "pytest>=8.4.2",
-    "pytest-django>=4.11.1",
     "pyodbc>=5.1.0",
     "python-dotenv>=1.2.1",
     "sqlalchemy>=2.0.0",
     "sqlglot[rs]>=28.10.1",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.2",
+    "pytest-django>=4.11.1",
 ]
 
 [tool.pytest.ini_options]

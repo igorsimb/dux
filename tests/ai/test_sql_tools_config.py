@@ -1,9 +1,23 @@
 import json
 from pathlib import Path
+
 import pytest
+from langchain_community.utilities import SQLDatabase
+from sqlalchemy import create_engine
 
 import ai.ai_utils.sql_tools as sql_tools
 from ai.sql_dialect import SQLDialect
+from ai.sql_guard import GuardedQuerySQLDatabaseTool
+
+
+def test_build_guarded_query_tool_returns_backend_execution_tool() -> None:
+    db = SQLDatabase(create_engine("sqlite:///:memory:"))
+
+    tool = sql_tools.build_guarded_query_tool(db)
+
+    assert isinstance(tool, GuardedQuerySQLDatabaseTool)
+    assert tool.db is db
+    assert tool.name == "sql_db_query"
 
 
 def test_load_dialect_and_tables_accepts_list_payload(tmp_path: Path) -> None:

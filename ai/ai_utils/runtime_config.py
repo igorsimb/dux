@@ -6,13 +6,8 @@ import os
 
 
 def get_model_name() -> str:
-    """Return the OpenAI model name for chat requests.
-
-    Example:
-        If `OPENAI_MODEL` is unset but legacy `MODEL_NAME` is present, this
-        helper still returns the configured model name.
-    """
-    return os.getenv("OPENAI_MODEL") or os.getenv("MODEL_NAME") or "gpt-5.4"
+    """Return the OpenAI model name for chat requests."""
+    return os.getenv("OPENAI_MODEL") or "gpt-5.6"
 
 
 def get_api_key() -> str | None:

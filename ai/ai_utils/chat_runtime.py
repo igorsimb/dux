@@ -11,7 +11,7 @@ from loguru import logger
 from core.db_config.source_database_router import get_sql_database_for_source
 
 from .sql_tools import (
-    build_guarded_sql_tools,
+    build_guarded_query_tool,
     clear_run_query_tools,
     load_allowed_source_candidates,
     set_run_query_tool_factory_for_source,
@@ -64,10 +64,7 @@ def build_model_and_tools(
 
     def build_run_query_tool_for_source(source_id: str) -> Any:
         db = get_sql_database_for_source(source_id)
-        _sql_tools, _list_tables_tool, _get_schema_tool, run_query_tool = (
-            build_guarded_sql_tools(db, model)
-        )
-        return run_query_tool
+        return build_guarded_query_tool(db)
 
     clear_run_query_tools()
     multiple_sources = len(source_ids) > 1
@@ -80,9 +77,7 @@ def build_model_and_tools(
             continue
 
         db = get_sql_database_for_source(source_id)
-        _sql_tools, _list_tables_tool, _get_schema_tool, run_query_tool = (
-            build_guarded_sql_tools(db, model)
-        )
+        run_query_tool = build_guarded_query_tool(db)
         set_run_query_tool_for_source(source_id, run_query_tool)
 
     tools = [

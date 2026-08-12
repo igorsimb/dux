@@ -90,8 +90,8 @@ configuration when deterministic tests can cover the risk.
 ## Configuration Boundaries
 
 - `.env` is loaded locally, but secrets and deployment-specific connection values must remain in environment variables.
-- `OPENAI_MODEL` selects the model; `MODEL_NAME` is a legacy fallback. Trust `ai/ai_utils/runtime_config.py` for the
-  current default rather than duplicating a model version in new docs or code.
+- `OPENAI_MODEL` selects the model. Trust `ai/ai_utils/runtime_config.py` for the current default rather than
+  duplicating a model version in new docs or code.
 - Chat execution always uses agent event streaming. Preserve the `astream` event flow and final-state reconciliation
   when changing response handling; do not add a non-streaming execution mode.
 - Source JSON maps logical connection fields to environment-variable names. Connector code resolves those names and

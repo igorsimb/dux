@@ -12,7 +12,6 @@ from datastar_py.sse import DatastarEvent
 from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest
 from django.shortcuts import render
-from dotenv import load_dotenv
 from loguru import logger
 
 from .ai_utils import (
@@ -44,9 +43,6 @@ from .ai_utils.token_usage import (
     parse_float_signal,
     parse_int_signal,
 )
-
-load_dotenv()
-
 
 async def finalize_producer_task(producer_task: asyncio.Task[Any]) -> None:
     """Cancel and await one chat producer task.

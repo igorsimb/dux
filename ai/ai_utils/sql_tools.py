@@ -1,4 +1,4 @@
-"""SQL tool utility helpers for dialect-aware config loading and LangChain SQL toolkit wiring."""
+"""SQL tool utility helpers for dialect-aware config loading and guarded execution."""
 
 from __future__ import annotations
 
@@ -9,7 +9,6 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any, Callable
 
-from langchain_community.agent_toolkits import SQLDatabaseToolkit
 import sqlglot
 
 from ai.sql_dialect import SQLDialect
@@ -180,23 +179,9 @@ def get_short_name_index_for_source(source_id: str) -> dict[str, list[str]]:
     return build_short_name_index(load_allowed_tables_for_source(source_id))
 
 
-def build_guarded_sql_tools(db: Any, llm: Any) -> tuple[list[Any], Any, Any, Any]:
-    toolkit = SQLDatabaseToolkit(db=db, llm=llm)
-    sql_tools = toolkit.get_tools()
-
-    for i, tool in enumerate(sql_tools):
-        if getattr(tool, "name", None) == "sql_db_query":
-            sql_tools[i] = GuardedQuerySQLDatabaseTool(
-                db=db, description=tool.description
-            )
-            break
-
-    list_tables_tool = next(
-        tool for tool in sql_tools if tool.name == "sql_db_list_tables"
-    )
-    get_schema_tool = next(tool for tool in sql_tools if tool.name == "sql_db_schema")
-    run_query_tool = next(tool for tool in sql_tools if tool.name == "sql_db_query")
-    return sql_tools, list_tables_tool, get_schema_tool, run_query_tool
+def build_guarded_query_tool(db: Any) -> GuardedQuerySQLDatabaseTool:
+    """Build the backend-only guarded SQL query tool for one database."""
+    return GuardedQuerySQLDatabaseTool(db=db)
 
 
 def set_run_query_tool_for_source(source_id: str, tool: Any) -> None:

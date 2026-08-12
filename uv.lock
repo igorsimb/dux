@@ -575,11 +575,15 @@ dependencies = [
     { name = "langgraph" },
     { name = "loguru" },
     { name = "pyodbc" },
-    { name = "pytest" },
-    { name = "pytest-django" },
     { name = "python-dotenv" },
     { name = "sqlalchemy" },
     { name = "sqlglot", extra = ["rs"] },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "pytest" },
+    { name = "pytest-django" },
 ]
 
 [package.metadata]
@@ -597,11 +601,15 @@ requires-dist = [
     { name = "langgraph", specifier = ">=1.2.4" },
     { name = "loguru", specifier = ">=0.7.3" },
     { name = "pyodbc", specifier = ">=5.1.0" },
-    { name = "pytest", specifier = ">=8.4.2" },
-    { name = "pytest-django", specifier = ">=4.11.1" },
     { name = "python-dotenv", specifier = ">=1.2.1" },
     { name = "sqlalchemy", specifier = ">=2.0.0" },
     { name = "sqlglot", extras = ["rs"], specifier = ">=28.10.1" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "pytest", specifier = ">=8.4.2" },
+    { name = "pytest-django", specifier = ">=4.11.1" },
 ]
 
 [[package]]

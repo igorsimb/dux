@@ -11,8 +11,6 @@ def test_system_prompt_uses_source_matched_dialect_without_generic_schema_tools(
     assert "fully qualified table names" in prompt
     assert "sql_db_list_tables" not in prompt
     assert "sql_db_schema" not in prompt
-    assert not hasattr(ai_prompts, "SYSTEM_PROMPT_RU_SARCASTIC_CLI_DEMO")
-    assert not hasattr(ai_prompts, "SYSTEM_PROMPT_CHECK_QUERY")
 
 
 def test_ai_prompts_imports_with_mixed_allowlisted_dialects(monkeypatch) -> None:

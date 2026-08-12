@@ -235,12 +235,6 @@ Use the project virtual environment when running tests on Windows:
 .venv/Scripts/python.exe -m pytest
 ```
 
-Current full-suite verification for this feature:
-
-```text
-.venv/Scripts/python.exe -m pytest -> 320 passed
-```
-
 For a narrower check while working on this area, start with the focused tests listed above.
 
 ## Future work
