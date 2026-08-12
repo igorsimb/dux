@@ -2,7 +2,24 @@ from __future__ import annotations
 
 import pytest
 
-from ai.ai_utils.token_usage import calculate_openai_usage_cost
+from ai.ai_utils.token_usage import calculate_openai_usage_cost, format_compact_tokens
+
+
+@pytest.mark.parametrize(
+    ("token_count", "expected_label"),
+    [
+        (999, "999 tokens"),
+        (1_800, "1.8k tokens"),
+        (12_000, "12k tokens"),
+        (1_800_000, "1.8M tokens"),
+        (12_000_000, "12M tokens"),
+    ],
+)
+def test_format_compact_tokens_uses_english_suffix(
+    token_count: int,
+    expected_label: str,
+) -> None:
+    assert format_compact_tokens(token_count) == expected_label
 
 
 @pytest.mark.parametrize(

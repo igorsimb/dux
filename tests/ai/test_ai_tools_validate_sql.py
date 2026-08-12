@@ -219,7 +219,7 @@ def test_validate_sql_reports_clickhouse_error_for_explicit_clickhouse_tables(mo
     )
 
     result = _call_validate_sql(
-        "SELECT count(DISTINCT sf.customer_id) AS [Клиентов] "
+        "SELECT count(DISTINCT sf.customer_id) AS [Customers] "
         "FROM analytics.sales_fact AS sf "
         "INNER JOIN analytics.customers AS c ON c.customer_id = sf.customer_id"
     )

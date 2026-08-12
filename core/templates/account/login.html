@@ -1,12 +1,12 @@
 {% extends "core/base.html" %}
 
-{% block title %}Вход | Dux{% endblock %}
+{% block title %}Sign in | Dux{% endblock %}
 
 {% block content %}
     <div class="mx-auto flex w-full max-w-md flex-col gap-5 py-8 md:py-12">
         <div class="text-center">
             <h1 class="text-2xl font-semibold tracking-tight md:text-3xl">Dux</h1>
-            <p class="mt-2 text-sm opacity-70">Умный помощник по работе с данными</p>
+            <p class="mt-2 text-sm opacity-70">Smart data assistant</p>
         </div>
 
         <div class="card border border-base-300 bg-base-100 shadow-sm">
@@ -42,14 +42,14 @@
                     <div class="empty-no-class"></div>
 
                     <label class="form-control w-full gap-1">
-                        <span class="label"><span class="label-text">Пароль</span></span>
+                        <span class="label"><span class="label-text">Password</span></span>
                         <input
                             type="password"
                             name="password"
                             autocomplete="current-password"
                             required
                             class="input input-bordered w-full"
-                            placeholder="Введите пароль"
+                            placeholder="Enter your password"
                         >
                         {% if form.password.errors %}
                             <span class="label"><span class="label-text-alt text-error">{{ form.password.errors|join:", " }}</span></span>
@@ -61,14 +61,14 @@
                     {% endif %}
                     <div class="empty-no-class"></div>
 
-                    <button type="submit" class="btn btn-primary mt-2 w-full">Войти</button>
+                    <button type="submit" class="btn btn-primary mt-2 w-full">Sign in</button>
                 </form>
 
 {#                <div class="mt-1 flex flex-col items-center gap-2 text-sm">#}
-{#                    <a href="{% url 'account_reset_password' %}" class="link link-hover">Забыли пароль?</a>#}
+{#                    <a href="{% url 'account_reset_password' %}" class="link link-hover">Forgot your password?</a>#}
 {#                     <div class="opacity-50">#}
-{#                        Нет аккаунта? Обратитесь к администратору#}
-{#                        <a href="{% url 'account_signup' %}" class="link link-primary">Зарегистрироваться</a>#}
+{#                        Need an account? Contact an administrator.#}
+{#                        <a href="{% url 'account_signup' %}" class="link link-primary">Sign up</a>#}
 {#                    </div>#}
                 </div>
             </div>

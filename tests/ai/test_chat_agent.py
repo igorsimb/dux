@@ -71,7 +71,7 @@ def _request(message: str, tools: list[Any]) -> ModelRequest:
     return ModelRequest(
         model=FakeMessagesListChatModel(responses=[]),
         messages=[HumanMessage(content=message)],
-        system_prompt=ai_prompts.SYSTEM_PROMPT_RU_SARCASTIC,
+        system_prompt=ai_prompts.SYSTEM_PROMPT_SARCASTIC,
         tools=tools,
         state=cast(ChatAgentState, {"messages": [HumanMessage(content=message)]}),
         runtime=Runtime(),
@@ -230,7 +230,7 @@ def test_build_chat_agent_uses_app_owned_final_answer_tool_instead_of_response_f
 def test_intent_routing_middleware_uses_no_tools_for_smalltalk_meta() -> None:
     lookup_tool = type("Tool", (), {"name": "lookup_prices"})()
     middleware = build_intent_routing_middleware(
-        [lookup_tool, switch_color_theme], ai_prompts.SYSTEM_PROMPT_RU_SARCASTIC
+        [lookup_tool, switch_color_theme], ai_prompts.SYSTEM_PROMPT_SARCASTIC
     )
     captured: dict[str, object] = {}
 
@@ -250,7 +250,7 @@ def test_intent_routing_middleware_uses_no_tools_for_smalltalk_meta() -> None:
 def test_intent_routing_middleware_exposes_only_theme_tool_for_theme_change() -> None:
     lookup_tool = type("Tool", (), {"name": "lookup_prices"})()
     middleware = build_intent_routing_middleware(
-        [lookup_tool, switch_color_theme], ai_prompts.SYSTEM_PROMPT_RU_SARCASTIC
+        [lookup_tool, switch_color_theme], ai_prompts.SYSTEM_PROMPT_SARCASTIC
     )
     captured: dict[str, object] = {}
 
@@ -274,7 +274,7 @@ def test_intent_routing_middleware_hides_theme_tool_from_sql_agent() -> None:
     lookup_tool = type("Tool", (), {"name": "lookup_prices"})()
     available_tools = [lookup_tool, switch_color_theme]
     middleware = build_intent_routing_middleware(
-        available_tools, ai_prompts.SYSTEM_PROMPT_RU_SARCASTIC
+        available_tools, ai_prompts.SYSTEM_PROMPT_SARCASTIC
     )
     captured: dict[str, object] = {}
 
@@ -290,14 +290,14 @@ def test_intent_routing_middleware_hides_theme_tool_from_sql_agent() -> None:
     assert result == "ok"
     assert captured == {
         "tools": [lookup_tool],
-        "prompt": ai_prompts.SYSTEM_PROMPT_RU_SARCASTIC,
+        "prompt": ai_prompts.SYSTEM_PROMPT_SARCASTIC,
     }
 
 
 def test_intent_routing_middleware_applies_overrides_in_async_path() -> None:
     lookup_tool = type("Tool", (), {"name": "lookup_prices"})()
     middleware = build_intent_routing_middleware(
-        [lookup_tool, switch_color_theme], ai_prompts.SYSTEM_PROMPT_RU_SARCASTIC
+        [lookup_tool, switch_color_theme], ai_prompts.SYSTEM_PROMPT_SARCASTIC
     )
 
     async def exercise(message: str) -> dict[str, object]:
@@ -315,11 +315,11 @@ def test_intent_routing_middleware_applies_overrides_in_async_path() -> None:
         assert result == "ok"
         return captured
 
-    assert asyncio.run(exercise("что ты умеешь?")) == {
+    assert asyncio.run(exercise("what can you do?")) == {
         "tools": [],
         "prompt": ai_prompts.SYSTEM_PROMPT_SMALLTALK_META,
     }
-    assert asyncio.run(exercise("смени тему на nord")) == {
+    assert asyncio.run(exercise("switch the theme to nord")) == {
         "tools": [switch_color_theme],
         "prompt": ai_prompts.SYSTEM_PROMPT_THEME_CHANGE,
     }
@@ -330,7 +330,7 @@ def test_intent_routing_middleware_logs_selected_intent_mode_without_raw_user_te
 ) -> None:
     lookup_tool = type("Tool", (), {"name": "lookup_prices"})()
     middleware = build_intent_routing_middleware(
-        [lookup_tool, switch_color_theme], ai_prompts.SYSTEM_PROMPT_RU_SARCASTIC
+        [lookup_tool, switch_color_theme], ai_prompts.SYSTEM_PROMPT_SARCASTIC
     )
     debug_calls: list[tuple[str, tuple[object, ...]]] = []
 
@@ -351,7 +351,7 @@ def test_intent_routing_middleware_logs_selected_intent_mode_without_raw_user_te
         return "ok"
 
     result = middleware.wrap_model_call(
-        _request("что ты умеешь?", [lookup_tool, switch_color_theme]), handler
+        _request("what can you do?", [lookup_tool, switch_color_theme]), handler
     )
 
     assert result == "ok"
@@ -361,7 +361,7 @@ def test_intent_routing_middleware_logs_selected_intent_mode_without_raw_user_te
     assert "chat.intent" in message
     assert "selected" in message
     assert "smalltalk_meta" in message
-    assert "что ты умеешь" not in message
+    assert "what can you do" not in message
 
 
 def test_build_chat_agent_preserves_validated_queries_in_custom_state() -> None:
@@ -513,8 +513,8 @@ def test_chat_agent_preserves_sql_result_blocks_for_structured_placeholder_resol
                             "args": {
                                 "layout": {
                                     "blocks": [
-                                        {"id": "c1", "type": "commentary", "content": "Вот таблица."},
-                                        {"id": "p1", "type": "data_table_placeholder", "title": "Заказы"},
+                                        {"id": "c1", "type": "commentary", "content": "Here is the table."},
+                                        {"id": "p1", "type": "data_table_placeholder", "title": "Orders"},
                                     ]
                                 }
                             },
@@ -530,7 +530,7 @@ def test_chat_agent_preserves_sql_result_blocks_for_structured_placeholder_resol
         queue: asyncio.Queue[object] = asyncio.Queue()
         await streaming.produce_agent_stream_async(
             agent,
-            "дай заказы",
+            "show orders",
             "robot-sql-result-blocks",
             "thread-sql-result-blocks",
             queue,
@@ -545,7 +545,7 @@ def test_chat_agent_preserves_sql_result_blocks_for_structured_placeholder_resol
 
     block_event = next(item for item in items if isinstance(item, dict) and item.get("kind") == "blocks")
     assert block_event["blocks"][1]["type"] == "data_table"
-    assert block_event["blocks"][1]["title"] == "Заказы"
+    assert block_event["blocks"][1]["title"] == "Orders"
     assert block_event["blocks"][1]["rows"] == [{"order_id": "ORD-123"}]
 
 

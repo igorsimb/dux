@@ -20,7 +20,9 @@ from ai.ai_utils.intent_router import (
         "как дела?",
     ],
 )
-def test_classify_intent_routes_obvious_greetings_to_smalltalk_meta(message: str) -> None:
+def test_classify_intent_routes_recognized_english_and_russian_greetings_to_smalltalk_meta(
+    message: str,
+) -> None:
     assert classify_intent(message) == INTENT_SMALLTALK_META
 
 
@@ -33,7 +35,9 @@ def test_classify_intent_routes_obvious_greetings_to_smalltalk_meta(message: str
         "what can you do?",
     ],
 )
-def test_classify_intent_routes_obvious_meta_requests_to_smalltalk_meta(message: str) -> None:
+def test_classify_intent_routes_recognized_english_and_russian_meta_requests_to_smalltalk_meta(
+    message: str,
+) -> None:
     assert classify_intent(message) == INTENT_SMALLTALK_META
 
 
@@ -48,7 +52,7 @@ def test_classify_intent_routes_obvious_meta_requests_to_smalltalk_meta(message:
         "поставь другой цвет",
     ],
 )
-def test_classify_intent_routes_obvious_theme_requests_to_theme_change(message: str) -> None:
+def test_classify_intent_routes_recognized_russian_theme_requests_to_theme_change(message: str) -> None:
     assert classify_intent(message) == INTENT_THEME_CHANGE
 
 
@@ -70,7 +74,7 @@ def test_classify_intent_routes_mixed_greeting_and_data_request_to_sql_agent() -
         "какие заказы есть по региону север",
     ],
 )
-def test_classify_intent_routes_obvious_business_requests_to_sql_agent(message: str) -> None:
+def test_classify_intent_routes_recognized_russian_business_requests_to_sql_agent(message: str) -> None:
     assert classify_intent(message) == INTENT_SQL_AGENT
 
 
@@ -79,12 +83,12 @@ def test_classify_intent_routes_obvious_business_requests_to_sql_agent(message: 
     [
         "",
         "   ",
-        "ну давай",
-        "помоги",
-        "да",
-        "ок",
-        "ага",
-        "ммм",
+        "go ahead",
+        "help",
+        "yes",
+        "okay",
+        "sure",
+        "hmm",
     ],
 )
 def test_classify_intent_falls_back_to_sql_agent_for_ambiguous_requests(message: str) -> None:

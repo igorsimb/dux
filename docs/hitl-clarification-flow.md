@@ -5,10 +5,9 @@ Users often ask useful but incomplete data questions.
 For example:
 
 - `show me recent transactions`
-- `покажи последние продажи`
 - `top customers by revenue`
 
-Those requests are risky for a SQL assistant because words like `recent`, `последние`, and `top` hide parameters that
+Those requests are risky for a SQL assistant because words like `recent` and `top` can hide parameters that
 change the query result. Guessing a period, ranking metric, or required date filter can produce a confident answer that
 looks precise but is based on an assumption the user never approved.
 
@@ -41,25 +40,25 @@ The user does not see a separate approval UI. From the chat surface, it looks li
 Example:
 
 ```text
-User: покажи последние продажи
-Assistant: За какой период показать продажи?
-User: за последние 30 дней
+User: show me recent sales
+Assistant: Which period should I use for sales?
+User: the last 30 days
 Assistant: ...runs the validated SQL flow and returns the answer...
 ```
 
 ## What counts as ambiguous
 
-The current implementation relies on the SQL prompt and the configured GPT-5.x model behavior rather than a deterministic
-phrase detector. That keeps the backend from blocking valid queries with brittle text rules.
+The SQL prompt and configured model decide when a request needs clarification. This lets the model interpret the
+request in context before choosing `ask_user` or continuing to table lookup.
 
 The prompt specifically tells the model to ask before querying when the user omits:
 
-- a concrete period for ambiguous timeframe words like `recent`, `latest`, `fresh`, `актуальные`, or `последние`
-- a ranking count or metric for ambiguous ranking words like `top`, `best`, `лучшие`, or `топ`
+- a concrete period for ambiguous timeframe words like `recent`, `latest`, or `fresh`
+- a ranking count when the requested result size is unclear
 - a concrete date range for tables whose metadata has `requires_date_filter=true`
 
-The existing default result limit still applies to ordinary non-ranking requests. If the only missing detail is output
-row count, the assistant may use the default limit rather than interrupting.
+The existing default result limit applies when the user does not provide a ranking size. The model may infer a ranking
+metric when the wording implies one.
 
 ## Resume behavior
 
@@ -83,7 +82,7 @@ result. The app does not use the older issue-snippet key `content`.
 
 If the model ever emits multiple `ask_user` calls in one interrupt, the app joins the questions into one assistant
 message and uses the next user input as the `respond` message for each pending action. The configured model is prompted
-to ask one concise Russian question, so multiple simultaneous questions should be unusual.
+to ask one concise, neutral question, so multiple simultaneous questions should be unusual.
 
 ## Persistence limits
 

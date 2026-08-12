@@ -1,12 +1,12 @@
 {% extends "core/base.html" %}
 
-{% block title %}Регистрация | Dux{% endblock %}
+{% block title %}Sign up | Dux{% endblock %}
 
 {% block content %}
     <div class="mx-auto flex w-full max-w-md flex-col gap-5 py-8 md:py-12">
         <div class="text-center">
-            <h1 class="text-2xl font-semibold tracking-tight md:text-3xl">Регистрация</h1>
-            <p class="mt-2 text-sm opacity-70">Создайте аккаунт для доступа к чату Dux</p>
+            <h1 class="text-2xl font-semibold tracking-tight md:text-3xl">Sign up</h1>
+            <p class="mt-2 text-sm opacity-70">Create an account to access Dux Chat</p>
         </div>
 
         <div class="card border border-base-300 bg-base-100 shadow-sm">
@@ -33,7 +33,7 @@
                             required
                             class="input input-bordered w-full"
                             value="{{ form.email.value|default:'' }}"
-                            placeholder="name@company.ru"
+                            placeholder="name@company.com"
                         >
                         {% if form.email.errors %}
                             <span class="label"><span class="label-text-alt text-error">{{ form.email.errors|join:", " }}</span></span>
@@ -41,14 +41,14 @@
                     </label>
 
                     <label class="form-control w-full gap-1">
-                        <span class="label"><span class="label-text">Пароль</span></span>
+                        <span class="label"><span class="label-text">Password</span></span>
                         <input
                             type="password"
                             name="password1"
                             autocomplete="new-password"
                             required
                             class="input input-bordered w-full"
-                            placeholder="Придумайте пароль"
+                            placeholder="Create a password"
                         >
                         {% if form.password1.errors %}
                             <span class="label"><span class="label-text-alt text-error">{{ form.password1.errors|join:", " }}</span></span>
@@ -56,14 +56,14 @@
                     </label>
 
                     <label class="form-control w-full gap-1">
-                        <span class="label"><span class="label-text">Повторите пароль</span></span>
+                        <span class="label"><span class="label-text">Confirm password</span></span>
                         <input
                             type="password"
                             name="password2"
                             autocomplete="new-password"
                             required
                             class="input input-bordered w-full"
-                            placeholder="Повторите пароль"
+                            placeholder="Repeat your password"
                         >
                         {% if form.password2.errors %}
                             <span class="label"><span class="label-text-alt text-error">{{ form.password2.errors|join:", " }}</span></span>
@@ -74,12 +74,12 @@
                         <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}">
                     {% endif %}
 
-                    <button type="submit" class="btn btn-primary mt-2 w-full">Зарегистрироваться</button>
+                    <button type="submit" class="btn btn-primary mt-2 w-full">Sign up</button>
                 </form>
 
                 <div class="mt-1 text-center text-sm opacity-70">
-                    Уже есть аккаунт?
-                    <a href="{% url 'account_login' %}" class="link link-primary">Войти</a>
+                    Already have an account?
+                    <a href="{% url 'account_login' %}" class="link link-primary">Sign in</a>
                 </div>
             </div>
         </div>

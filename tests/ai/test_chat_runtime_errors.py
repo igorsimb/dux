@@ -37,7 +37,7 @@ def test_run_chat_session_enqueues_error_token_and_terminal_none(monkeypatch) ->
     first_item = items[0]
     assert isinstance(first_item, dict)
     assert first_item.get("kind") == "token"
-    assert "Ошибка" in str(first_item.get("text"))
+    assert "Error" in str(first_item.get("text"))
     assert build_public_conversation_code("thread-async-1") not in str(
         first_item.get("text")
     )
@@ -192,7 +192,7 @@ def test_run_chat_session_uses_retry_error_when_reset_retry_also_fails(
     first_item = items[0]
     assert isinstance(first_item, dict)
     assert first_item.get("kind") == "token"
-    assert "Ошибка" in str(first_item.get("text"))
+    assert "Error" in str(first_item.get("text"))
     assert items[-1] is None
 
 
@@ -237,7 +237,7 @@ def test_run_chat_session_enqueues_error_when_thread_reset_fails(monkeypatch) ->
     first_item = items[0]
     assert isinstance(first_item, dict)
     assert first_item.get("kind") == "token"
-    assert "Ошибка" in str(first_item.get("text"))
+    assert "Error" in str(first_item.get("text"))
     assert build_public_conversation_code("thread-poisoned-3") not in str(
         first_item.get("text")
     )

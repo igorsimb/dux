@@ -2,9 +2,9 @@
 
 ## 2026-07-06 (`v0.9.35`)
 
-- SQL result tables now include a permission-gated `Детали` panel with source, table, row-count, model-note, and raw-SQL
-  context.
-- Authorized users can expand and copy formatted raw SQL from `Показать SQL`; unauthorized users do not receive restricted
+- SQL result tables now include a permission-gated `Details` panel with source, table, row-count, model-note, and
+  raw-SQL context.
+- Authorized users can expand and copy formatted raw SQL from `Show SQL`; unauthorized users do not receive restricted
   details in the page HTML or saved block JSON.
 - Same-tab restore now rebuilds permitted table details from the saved structured block data.
 
@@ -12,7 +12,7 @@
 
 - SQL result tables now show large numeric values with readable spacing and decimal commas, making quantities and sales
   amounts easier to scan.
-- SQL generation now prefers human-readable Russian aliases for final result columns, so copied tables have clearer
+- SQL generation now prefers human-readable English aliases for final result columns, so copied tables have clearer
   headers for metrics like moving averages and daily percentage changes.
 
 ## 2026-06-13
@@ -61,7 +61,7 @@
 ## 2026-03-19 (`v0.9.0`)
 
 - Chat now restores the visible transcript and cumulative usage badge after refresh in the same browser tab.
-- Added a `Новый чат` button that rotates the tab session key and resets the visible chat and usage counters.
+- Added a `New chat` button that rotates the tab session key and resets the visible chat and usage counters.
 
 ## 2026-03-14 (`v0.8.8`)
 

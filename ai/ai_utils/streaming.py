@@ -334,8 +334,8 @@ def build_final_text_delta(streamed_text: str, final_text: str) -> str:
     """Return the missing suffix needed to complete streamed assistant text.
 
     Example:
-        >>> build_final_text_delta("Прив", "Привет!")
-        'ет!'
+        >>> build_final_text_delta("Hel", "Hello!")
+        'lo!'
     """
     if not final_text:
         return ""

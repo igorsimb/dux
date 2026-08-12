@@ -90,7 +90,7 @@ def test_extract_model_response_layout_uses_app_owned_state_only() -> None:
     response = streaming.extract_model_response_layout(
         {
             "model_response_layout": {
-                "blocks": [{"id": "c1", "type": "commentary", "content": "Готово."}]
+                "blocks": [{"id": "c1", "type": "commentary", "content": "Done."}]
             },
         }
     )
@@ -103,8 +103,8 @@ def test_build_final_response_blocks_resolves_placeholders_positionally() -> Non
     response = AgentCommentaryResponse.model_validate(
         {
             "blocks": [
-                {"id": "c1", "type": "commentary", "content": "Вот результат."},
-                {"id": "p1", "type": "data_table_placeholder", "title": "Топ клиентов"},
+                {"id": "c1", "type": "commentary", "content": "Here is the result."},
+                {"id": "p1", "type": "data_table_placeholder", "title": "Top customers"},
             ]
         }
     )
@@ -126,10 +126,10 @@ def test_build_final_response_blocks_resolves_placeholders_positionally() -> Non
         "id": "c1",
         "type": "commentary",
         "format": "markdown",
-        "content": "Вот результат.",
+        "content": "Here is the result.",
     }
     assert blocks[1]["type"] == "data_table"
-    assert blocks[1]["title"] == "Топ клиентов"
+    assert blocks[1]["title"] == "Top customers"
     assert blocks[1]["rows"] == [{"customer": "A"}]
 
 
@@ -137,8 +137,8 @@ def test_build_final_response_blocks_reads_sql_result_table_blocks() -> None:
     response = AgentCommentaryResponse.model_validate(
         {
             "blocks": [
-                {"id": "c1", "type": "commentary", "content": "Вот результат."},
-                {"id": "p1", "type": "data_table_placeholder", "title": "Топ клиентов"},
+                {"id": "c1", "type": "commentary", "content": "Here is the result."},
+                {"id": "p1", "type": "data_table_placeholder", "title": "Top customers"},
             ]
         }
     )
@@ -157,7 +157,7 @@ def test_build_final_response_blocks_reads_sql_result_table_blocks() -> None:
     blocks = streaming.build_final_response_blocks(data, response)
 
     assert blocks[1]["type"] == "data_table"
-    assert blocks[1]["title"] == "Топ клиентов"
+    assert blocks[1]["title"] == "Top customers"
     assert blocks[1]["rows"] == [{"customer": "A"}]
 
 
@@ -168,10 +168,10 @@ def test_build_final_response_blocks_copies_placeholder_notes_to_matched_table()
                 {
                     "id": "p1",
                     "type": "data_table_placeholder",
-                    "title": "Топ клиентов",
+                    "title": "Top customers",
                     "notes": [
-                        {"label": "Период", "value": "последние 30 дней"},
-                        {"label": "Метрика", "value": "количество продаж"},
+                        {"label": "Period", "value": "last 30 days"},
+                        {"label": "Metric", "value": "sales count"},
                     ],
                 }
             ]
@@ -195,14 +195,14 @@ def test_build_final_response_blocks_copies_placeholder_notes_to_matched_table()
         {
             "id": "sql-result-1",
             "type": "data_table",
-            "title": "Топ клиентов",
+            "title": "Top customers",
             "columns": [{"key": "customer", "label": "customer", "type": "string"}],
             "rows": [{"customer": "A"}],
             "meta": {"row_count": 1, "rendered_row_count": 1, "truncated": False},
             "details": {
                 "notes": [
-                    {"label": "Период", "value": "последние 30 дней"},
-                    {"label": "Метрика", "value": "количество продаж"},
+                    {"label": "Period", "value": "last 30 days"},
+                    {"label": "Metric", "value": "sales count"},
                 ]
             },
         }
@@ -216,7 +216,7 @@ def test_build_final_response_blocks_preserves_backend_facts_when_copying_notes(
                 {
                     "id": "p1",
                     "type": "data_table_placeholder",
-                    "notes": [{"label": "Период", "value": "последние 30 дней"}],
+                    "notes": [{"label": "Period", "value": "last 30 days"}],
                 }
             ]
         }
@@ -247,12 +247,12 @@ def test_build_final_response_blocks_preserves_backend_facts_when_copying_notes(
     details = blocks[0]["details"]
     assert details["facts"]["source_id"] == "mssql_default"
     assert details["facts"]["raw_sql"] == "SELECT * FROM dbo.customer_orders"
-    assert details["notes"] == [{"label": "Период", "value": "последние 30 дней"}]
+    assert details["notes"] == [{"label": "Period", "value": "last 30 days"}]
 
 
 def test_build_final_response_blocks_appends_unused_sql_result_blocks() -> None:
     response = AgentCommentaryResponse.model_validate(
-        {"blocks": [{"id": "c1", "type": "commentary", "content": "Готово."}]}
+        {"blocks": [{"id": "c1", "type": "commentary", "content": "Done."}]}
     )
     data = {
         "sql_result_table_blocks": [
@@ -273,7 +273,7 @@ def test_build_final_response_blocks_appends_unused_sql_result_blocks() -> None:
 
 def test_build_final_response_blocks_resolves_empty_sql_result() -> None:
     response = AgentCommentaryResponse.model_validate(
-        {"blocks": [{"id": "p1", "type": "data_table_placeholder", "title": "Нет результатов"}]}
+        {"blocks": [{"id": "p1", "type": "data_table_placeholder", "title": "No results"}]}
     )
     data = {
         "sql_result_table_blocks": [
@@ -293,7 +293,7 @@ def test_build_final_response_blocks_resolves_empty_sql_result() -> None:
         {
             "id": "sql-result-1",
             "type": "data_table",
-            "title": "Нет результатов",
+            "title": "No results",
             "columns": [],
             "rows": [],
             "meta": {"row_count": 0, "rendered_row_count": 0, "truncated": False},
@@ -303,7 +303,7 @@ def test_build_final_response_blocks_resolves_empty_sql_result() -> None:
 
 def test_build_final_response_blocks_skips_missing_table_placeholder(monkeypatch) -> None:
     response = AgentCommentaryResponse.model_validate(
-        {"blocks": [{"id": "p1", "type": "data_table_placeholder", "title": "Нет таблицы"}]}
+        {"blocks": [{"id": "p1", "type": "data_table_placeholder", "title": "No table"}]}
     )
     warning_calls: list[tuple[str, tuple[object, ...]]] = []
     monkeypatch.setattr(
@@ -325,7 +325,7 @@ def test_build_final_response_blocks_skips_missing_table_placeholder(monkeypatch
 
 def test_build_final_response_blocks_skips_malformed_sql_result_block(monkeypatch) -> None:
     response = AgentCommentaryResponse.model_validate(
-        {"blocks": [{"id": "c1", "type": "commentary", "content": "Готово."}]}
+        {"blocks": [{"id": "c1", "type": "commentary", "content": "Done."}]}
     )
     warning_calls: list[tuple[str, tuple[object, ...]]] = []
     monkeypatch.setattr(
@@ -338,7 +338,7 @@ def test_build_final_response_blocks_skips_malformed_sql_result_block(monkeypatc
         {"sql_result_table_blocks": [{"id": "broken", "type": "data_table"}]}, response
     )
 
-    assert blocks == [{"id": "c1", "type": "commentary", "format": "markdown", "content": "Готово."}]
+    assert blocks == [{"id": "c1", "type": "commentary", "format": "markdown", "content": "Done."}]
     assert len(warning_calls) == 1
     message, args = warning_calls[0]
     assert args == ()
@@ -351,17 +351,17 @@ def test_extract_ask_user_questions_supports_args_and_arguments() -> None:
         Interrupt(
             value={
                 "action_requests": [
-                    {"name": "ask_user", "args": {"question": "Какой период?"}},
+                    {"name": "ask_user", "args": {"question": "Which period?"}},
                     {"name": "other_tool", "args": {"question": "ignore"}},
-                    {"name": "ask_user", "arguments": {"question": "Сколько строк?"}},
+                    {"name": "ask_user", "arguments": {"question": "How many rows?"}},
                 ]
             }
         ),
     )
 
     assert streaming.extract_ask_user_questions_from_interrupts(interrupts) == [
-        "Какой период?",
-        "Сколько строк?",
+        "Which period?",
+        "How many rows?",
     ]
 
 
@@ -374,7 +374,7 @@ def test_build_agent_graph_input_resumes_pending_ask_user_interrupt() -> None:
                     Interrupt(
                         value={
                             "action_requests": [
-                                {"name": "ask_user", "args": {"question": "Какой период?"}}
+                                {"name": "ask_user", "args": {"question": "Which period?"}}
                             ]
                         }
                     ),
@@ -383,14 +383,14 @@ def test_build_agent_graph_input_resumes_pending_ask_user_interrupt() -> None:
 
     graph_input = asyncio.run(
         streaming.build_agent_graph_input(
-            FakeAgent(), "последние 30 дней", {"configurable": {"thread_id": "thread-hitl"}}
+            FakeAgent(), "last 30 days", {"configurable": {"thread_id": "thread-hitl"}}
         )
     )
 
     assert isinstance(graph_input, Command)
     assert graph_input.goto == ()
     assert graph_input.resume == {
-        "decisions": [{"type": "respond", "message": "последние 30 дней"}]
+        "decisions": [{"type": "respond", "message": "last 30 days"}]
     }
 
 
@@ -402,8 +402,8 @@ def test_build_agent_graph_input_resumes_multiple_pending_ask_user_interrupts() 
                     Interrupt(
                         value={
                             "action_requests": [
-                                {"name": "ask_user", "args": {"question": "Какой период?"}},
-                                {"name": "ask_user", "args": {"question": "Сколько строк?"}},
+                                {"name": "ask_user", "args": {"question": "Which period?"}},
+                                {"name": "ask_user", "args": {"question": "How many rows?"}},
                             ]
                         }
                     ),
@@ -411,18 +411,18 @@ def test_build_agent_graph_input_resumes_multiple_pending_ask_user_interrupts() 
             )
 
     graph_input = asyncio.run(
-        streaming.build_agent_graph_input(FakeAgent(), "30 дней и 20 строк", {"configurable": {"thread_id": "t"}})
+        streaming.build_agent_graph_input(FakeAgent(), "30 days and 20 rows", {"configurable": {"thread_id": "t"}})
     )
 
     assert isinstance(graph_input, Command)
     assert graph_input.goto == ()
     assert graph_input.resume == {
         "decisions": [
-            {"type": "respond", "message": "30 дней и 20 строк"},
-            {"type": "respond", "message": "30 дней и 20 строк"},
+            {"type": "respond", "message": "30 days and 20 rows"},
+            {"type": "respond", "message": "30 days and 20 rows"},
         ]
     }
-    assert streaming.build_ask_user_message(["Какой период?", "Сколько строк?"]) == "Какой период?\n\nСколько строк?"
+    assert streaming.build_ask_user_message(["Which period?", "How many rows?"]) == "Which period?\n\nHow many rows?"
 
 
 def test_build_agent_graph_input_resets_sql_result_blocks_for_fresh_turn() -> None:
@@ -447,7 +447,7 @@ def test_build_agent_graph_input_resets_app_owned_render_state_for_fresh_turn() 
             return SimpleNamespace(
                 values={
                     "model_response_layout": {
-                        "blocks": [{"id": "old", "type": "commentary", "content": "Старый ответ."}]
+                        "blocks": [{"id": "old", "type": "commentary", "content": "Old response."}]
                     },
                     "sql_result_table_blocks": [{"id": "old-table", "type": "data_table"}],
                     "validated_queries": {"vid-1": {"sql": "SELECT 1"}},
@@ -479,7 +479,7 @@ def test_produce_agent_stream_async_renders_fresh_sql_table_after_prior_table(mo
         FakeUsageMetadataCallbackHandler,
     )
 
-    old_layout = {"blocks": [{"id": "old-p1", "type": "data_table_placeholder", "title": "Старая таблица"}]}
+    old_layout = {"blocks": [{"id": "old-p1", "type": "data_table_placeholder", "title": "Old table"}]}
     old_table = {
         "id": "sql-result-1",
         "type": "data_table",
@@ -487,7 +487,7 @@ def test_produce_agent_stream_async_renders_fresh_sql_table_after_prior_table(mo
         "rows": [{"old": "A"}],
         "meta": {"row_count": 1, "rendered_row_count": 1, "truncated": False},
     }
-    fresh_layout = {"blocks": [{"id": "p1", "type": "data_table_placeholder", "title": "Новая таблица"}]}
+    fresh_layout = {"blocks": [{"id": "p1", "type": "data_table_placeholder", "title": "New table"}]}
     fresh_table = {
         "id": "sql-result-1",
         "type": "data_table",
@@ -532,7 +532,7 @@ def test_produce_agent_stream_async_renders_fresh_sql_table_after_prior_table(mo
 
     items = asyncio.run(exercise())
 
-    assert {"kind": "blocks", "blocks": [{**fresh_table, "title": "Новая таблица"}]} in items
+    assert {"kind": "blocks", "blocks": [{**fresh_table, "title": "New table"}]} in items
 
 
 def test_build_agent_graph_input_does_not_force_model_goto_for_app_owned_layout() -> None:
@@ -541,7 +541,7 @@ def test_build_agent_graph_input_does_not_force_model_goto_for_app_owned_layout(
             return SimpleNamespace(
                 values={
                     "model_response_layout": {
-                        "blocks": [{"id": "old", "type": "commentary", "content": "Старый ответ."}]
+                        "blocks": [{"id": "old", "type": "commentary", "content": "Old response."}]
                     },
                     "sql_result_table_blocks": [],
                 },
@@ -549,7 +549,7 @@ def test_build_agent_graph_input_does_not_force_model_goto_for_app_owned_layout(
                     Interrupt(
                         value={
                             "action_requests": [
-                                {"name": "ask_user", "args": {"question": "Какой период?"}}
+                                {"name": "ask_user", "args": {"question": "Which period?"}}
                             ]
                         }
                     ),
@@ -557,12 +557,12 @@ def test_build_agent_graph_input_does_not_force_model_goto_for_app_owned_layout(
             )
 
     graph_input = asyncio.run(
-        streaming.build_agent_graph_input(FakeAgent(), "последние 30 дней", {"configurable": {"thread_id": "t"}})
+        streaming.build_agent_graph_input(FakeAgent(), "last 30 days", {"configurable": {"thread_id": "t"}})
     )
 
     assert isinstance(graph_input, Command)
     assert graph_input.goto == ()
-    assert graph_input.resume == {"decisions": [{"type": "respond", "message": "последние 30 дней"}]}
+    assert graph_input.resume == {"decisions": [{"type": "respond", "message": "last 30 days"}]}
 
 
 def test_produce_agent_stream_async_emits_ask_user_interrupt_question(monkeypatch) -> None:
@@ -584,7 +584,7 @@ def test_produce_agent_stream_async_emits_ask_user_interrupt_question(monkeypatc
 
         async def astream(self, graph_input, config, stream_mode, **kwargs):
             assert graph_input == {
-                "messages": [streaming.HumanMessage(content="покажи последние продажи")],
+                "messages": [streaming.HumanMessage(content="show recent sales")],
                 "sql_result_table_blocks": [],
                 "model_response_layout": None,
             }
@@ -597,7 +597,7 @@ def test_produce_agent_stream_async_emits_ask_user_interrupt_question(monkeypatc
                                 "action_requests": [
                                     {
                                         "name": "ask_user",
-                                        "args": {"question": "За какой период показать продажи?"},
+                                        "args": {"question": "Which period should I use for sales?"},
                                     }
                                 ]
                             }
@@ -610,7 +610,7 @@ def test_produce_agent_stream_async_emits_ask_user_interrupt_question(monkeypatc
         queue: asyncio.Queue[object] = asyncio.Queue()
         await streaming.produce_agent_stream_async(
             FakeAgent(),
-            "покажи последние продажи",
+            "show recent sales",
             "robot-hitl",
             "thread-hitl",
             queue,
@@ -622,7 +622,7 @@ def test_produce_agent_stream_async_emits_ask_user_interrupt_question(monkeypatc
         return items
 
     assert asyncio.run(exercise()) == [
-        {"kind": "token", "text": "За какой период показать продажи?"}
+        {"kind": "token", "text": "Which period should I use for sales?"}
     ]
 
 
@@ -642,12 +642,12 @@ def test_produce_agent_stream_async_resumes_pending_ask_user_interrupt(monkeypat
                     tool_calls=[
                         {
                             "name": "ask_user",
-                            "args": {"question": "За какой период показать продажи?"},
+                            "args": {"question": "Which period should I use for sales?"},
                             "id": "call-ask-user-1",
                         }
                     ],
                 ),
-                AIMessage(content="Показываю продажи за последние 30 дней."),
+                AIMessage(content="Showing sales for the last 30 days."),
             ]
         ),
         [ai_tools.ask_user],
@@ -668,11 +668,11 @@ def test_produce_agent_stream_async_resumes_pending_ask_user_interrupt(monkeypat
             items.append(queue.get_nowait())
         return items
 
-    first_items = asyncio.run(run_turn("покажи последние продажи"))
-    second_items = asyncio.run(run_turn("за последние 30 дней"))
+    first_items = asyncio.run(run_turn("show recent sales"))
+    second_items = asyncio.run(run_turn("for the last 30 days"))
 
-    assert {"kind": "token", "text": "За какой период показать продажи?"} in first_items
-    assert {"kind": "token", "text": "Показываю продажи за последние 30 дней."} in second_items
+    assert {"kind": "token", "text": "Which period should I use for sales?"} in first_items
+    assert {"kind": "token", "text": "Showing sales for the last 30 days."} in second_items
 
 
 def test_produce_agent_stream_async_real_agent_resumes_ask_user_with_streaming(monkeypatch) -> None:
@@ -691,12 +691,12 @@ def test_produce_agent_stream_async_real_agent_resumes_ask_user_with_streaming(m
                     tool_calls=[
                         {
                             "name": "ask_user",
-                            "args": {"question": "Между какими датами искать снижение?"},
+                            "args": {"question": "Which date range should I use to investigate the decline?"},
                             "id": "call-ask-user-dates",
                         }
                     ],
                 ),
-                AIMessage(content="Продолжаю после ответа пользователя."),
+                AIMessage(content="Continuing after the user's response."),
             ]
         ),
         [ai_tools.ask_user],
@@ -717,11 +717,11 @@ def test_produce_agent_stream_async_real_agent_resumes_ask_user_with_streaming(m
             items.append(queue.get_nowait())
         return items
 
-    first_items = asyncio.run(run_turn("Найди причины снижения продаж"))
-    second_items = asyncio.run(run_turn("реши сам"))
+    first_items = asyncio.run(run_turn("Find the reasons for the sales decline"))
+    second_items = asyncio.run(run_turn("choose for me"))
 
-    assert {"kind": "token", "text": "Между какими датами искать снижение?"} in first_items
-    assert {"kind": "token", "text": "Продолжаю после ответа пользователя."} in second_items
+    assert {"kind": "token", "text": "Which date range should I use to investigate the decline?"} in first_items
+    assert {"kind": "token", "text": "Continuing after the user's response."} in second_items
 
 
 def test_produce_agent_stream_async_real_agent_resumes_after_prior_answer(monkeypatch) -> None:
@@ -731,18 +731,18 @@ def test_produce_agent_stream_async_real_agent_resumes_after_prior_answer(monkey
     agent = build_chat_agent(
         ToolReadyFakeModel(
             responses=[
-                AIMessage(content="Старый структурированный ответ."),
+                AIMessage(content="Old structured response."),
                 AIMessage(
                     content="",
                     tool_calls=[
                         {
                             "name": "ask_user",
-                            "args": {"question": "Между какими датами искать снижение?"},
+                            "args": {"question": "Which date range should I use to investigate the decline?"},
                             "id": "call-ask-user-after-structured",
                         }
                     ],
                 ),
-                AIMessage(content="Продолжаю анализ после уточнения дат."),
+                AIMessage(content="Continuing the analysis after the date clarification."),
             ]
         ),
         [ai_tools.ask_user],
@@ -763,13 +763,13 @@ def test_produce_agent_stream_async_real_agent_resumes_after_prior_answer(monkey
             items.append(queue.get_nowait())
         return items
 
-    first_items = asyncio.run(run_turn("Покажи динамику продаж"))
-    second_items = asyncio.run(run_turn("Найди причины снижения"))
-    third_items = asyncio.run(run_turn("между 07.06 и 11.06"))
+    first_items = asyncio.run(run_turn("Show sales trends"))
+    second_items = asyncio.run(run_turn("Find the reasons for the decline"))
+    third_items = asyncio.run(run_turn("between June 7 and June 11"))
 
-    assert {"kind": "token", "text": "Старый структурированный ответ."} in first_items
-    assert {"kind": "token", "text": "Между какими датами искать снижение?"} in second_items
-    assert {"kind": "token", "text": "Продолжаю анализ после уточнения дат."} in third_items
+    assert {"kind": "token", "text": "Old structured response."} in first_items
+    assert {"kind": "token", "text": "Which date range should I use to investigate the decline?"} in second_items
+    assert {"kind": "token", "text": "Continuing the analysis after the date clarification."} in third_items
 
 
 def test_produce_agent_stream_async_resume_continuation_wins_over_stale_checkpoint(monkeypatch) -> None:
@@ -786,7 +786,7 @@ def test_produce_agent_stream_async_resume_continuation_wins_over_stale_checkpoi
     )
 
     old_model_response_layout = {
-        "blocks": [{"id": "old-c1", "type": "commentary", "content": "Старый анализ продаж."}]
+        "blocks": [{"id": "old-c1", "type": "commentary", "content": "Old sales analysis."}]
     }
 
     class FakeAgent:
@@ -807,7 +807,7 @@ def test_produce_agent_stream_async_resume_continuation_wins_over_stale_checkpoi
                             "action_requests": [
                                 {
                                     "name": "ask_user",
-                                    "args": {"question": "В каком разрезе искать причину снижения?"},
+                                    "args": {"question": "Which dimension should I use to investigate the decline?"},
                                 }
                             ]
                         }
@@ -820,7 +820,7 @@ def test_produce_agent_stream_async_resume_continuation_wins_over_stale_checkpoi
             assert stream_mode == ["messages", "custom", "values"]
             if not isinstance(graph_input, Command):
                 assert graph_input == {
-                    "messages": [streaming.HumanMessage(content="Найди причины такого снижения по сумме продаж")],
+                    "messages": [streaming.HumanMessage(content="Find the reasons for this decline in sales value")],
                     "sql_result_table_blocks": [],
                     "model_response_layout": None,
                 }
@@ -834,7 +834,9 @@ def test_produce_agent_stream_async_resume_continuation_wins_over_stale_checkpoi
                                     "action_requests": [
                                         {
                                             "name": "ask_user",
-                                            "args": {"question": "В каком разрезе искать причину снижения?"},
+                                            "args": {
+                                                "question": "Which dimension should I use to investigate the decline?"
+                                            },
                                         }
                                     ]
                                 }
@@ -847,12 +849,17 @@ def test_produce_agent_stream_async_resume_continuation_wins_over_stale_checkpoi
             self.received_resume = True
             self.has_pending_question = False
             assert graph_input.resume == {
-                "decisions": [{"type": "respond", "message": "реши сам, я хочу понять причины снижения продаж."}]
+                "decisions": [
+                    {
+                        "type": "respond",
+                        "message": "choose for me; I want to understand the reasons for the sales decline.",
+                    }
+                ]
             }
             yield "values", {"model_response_layout": old_model_response_layout, "sql_result_table_blocks": []}
             self.post_resume_continued = True
-            yield "messages", (streaming.AIMessageChunk(content="Продолжаю анализ после уточнения."), {})
-            yield "values", {"messages": [streaming.AIMessage(content="Продолжаю анализ после уточнения.")]}
+            yield "messages", (streaming.AIMessageChunk(content="Continuing the analysis after clarification."), {})
+            yield "values", {"messages": [streaming.AIMessage(content="Continuing the analysis after clarification.")]}
 
     agent = FakeAgent()
 
@@ -871,13 +878,13 @@ def test_produce_agent_stream_async_resume_continuation_wins_over_stale_checkpoi
             items.append(queue.get_nowait())
         return items
 
-    first_items = asyncio.run(run_turn("Найди причины такого снижения по сумме продаж"))
-    second_items = asyncio.run(run_turn("реши сам, я хочу понять причины снижения продаж."))
+    first_items = asyncio.run(run_turn("Find the reasons for this decline in sales value"))
+    second_items = asyncio.run(run_turn("choose for me; I want to understand the reasons for the sales decline."))
 
-    assert {"kind": "token", "text": "В каком разрезе искать причину снижения?"} in first_items
+    assert {"kind": "token", "text": "Which dimension should I use to investigate the decline?"} in first_items
     assert agent.received_resume is True
     assert agent.post_resume_continued is True
-    assert {"kind": "token", "text": "Продолжаю анализ после уточнения."} in second_items
+    assert {"kind": "token", "text": "Continuing the analysis after clarification."} in second_items
     assert not any(isinstance(item, dict) and item.get("kind") == "blocks" for item in second_items)
 
 
@@ -899,13 +906,13 @@ def test_produce_agent_stream_async_streams_json_text_as_plain_text(monkeypatch)
             return SimpleNamespace(interrupts=())
 
         async def astream(self, graph_input, config, stream_mode, **kwargs):
-            old_json_suffix = '{"id":"old-c1","type":"commentary","content":"Старый анализ продаж."}]}'
+            old_json_suffix = '{"id":"old-c1","type":"commentary","content":"Old sales analysis."}]}'
             yield "messages", (streaming.AIMessageChunk(content='{"blocks":['), {})
             yield "messages", (streaming.AIMessageChunk(content=old_json_suffix), {})
             yield "values", {
                 "messages": [
                     streaming.AIMessage(
-                        content='{"blocks":[{"id":"old-c1","type":"commentary","content":"Старый анализ продаж."}]}'
+                        content='{"blocks":[{"id":"old-c1","type":"commentary","content":"Old sales analysis."}]}'
                     )
                 ]
             }
@@ -914,7 +921,7 @@ def test_produce_agent_stream_async_streams_json_text_as_plain_text(monkeypatch)
         queue: asyncio.Queue[object] = asyncio.Queue()
         await streaming.produce_agent_stream_async(
             FakeAgent(),
-            "реши сам, я хочу понять причины снижения продаж.",
+            "choose for me; I want to understand the reasons for the sales decline.",
             "robot-stale-json",
             "thread-stale-json",
             queue,
@@ -930,7 +937,7 @@ def test_produce_agent_stream_async_streams_json_text_as_plain_text(monkeypatch)
     assert {"kind": "token", "text": '{"blocks":['} in items
     assert {
         "kind": "token",
-        "text": '{"id":"old-c1","type":"commentary","content":"Старый анализ продаж."}]}',
+        "text": '{"id":"old-c1","type":"commentary","content":"Old sales analysis."}]}',
     } in items
     assert not any(isinstance(item, dict) and item.get("kind") == "blocks" for item in items)
 
@@ -948,8 +955,8 @@ def test_produce_agent_stream_async_suppresses_stale_final_ai_json_text(monkeypa
         FakeUsageMetadataCallbackHandler,
     )
 
-    stale_json = '{"blocks":[{"id":"old-c1","type":"commentary","content":"Старый анализ продаж."}]}'
-    stale_messages = [streaming.HumanMessage(content="старый вопрос"), streaming.AIMessage(content=stale_json)]
+    stale_json = '{"blocks":[{"id":"old-c1","type":"commentary","content":"Old sales analysis."}]}'
+    stale_messages = [streaming.HumanMessage(content="old question"), streaming.AIMessage(content=stale_json)]
 
     class FakeAgent:
         async def aget_state(self, config):
@@ -962,7 +969,7 @@ def test_produce_agent_stream_async_suppresses_stale_final_ai_json_text(monkeypa
         queue: asyncio.Queue[object] = asyncio.Queue()
         await streaming.produce_agent_stream_async(
             FakeAgent(),
-            "реши сам, я хочу понять причины снижения продаж.",
+            "choose for me; I want to understand the reasons for the sales decline.",
             "robot-stale-final-json",
             "thread-stale-final-json",
             queue,
@@ -1060,7 +1067,7 @@ def test_produce_agent_stream_async_falls_back_to_final_ai_message(monkeypatch) 
             assert "values" in stream_mode
             yield (
                 "values",
-                {"messages": [streaming.AIMessage(content="Привет! Чем помочь?")]},
+                {"messages": [streaming.AIMessage(content="Hello! How can I help?")]},
             )
 
     async def exercise() -> list[object]:
@@ -1080,7 +1087,7 @@ def test_produce_agent_stream_async_falls_back_to_final_ai_message(monkeypatch) 
 
     items = asyncio.run(exercise())
 
-    assert {"kind": "token", "text": "Привет! Чем помочь?"} in items
+    assert {"kind": "token", "text": "Hello! How can I help?"} in items
 
 
 def test_produce_agent_stream_async_appends_missing_suffix_when_final_text_extends_stream(
@@ -1110,8 +1117,8 @@ def test_produce_agent_stream_async_appends_missing_suffix_when_final_text_exten
             assert config["configurable"] == {"thread_id": "thread-async-2"}
             assert stream_mode[:2] == ["messages", "custom"]
             assert "values" in stream_mode
-            yield "messages", (streaming.AIMessageChunk(content="Прив"), {})
-            yield "values", {"messages": [streaming.AIMessage(content="Привет!")]}
+            yield "messages", (streaming.AIMessageChunk(content="Hel"), {})
+            yield "values", {"messages": [streaming.AIMessage(content="Hello!")]}
 
     async def exercise() -> list[object]:
         queue: asyncio.Queue[object] = asyncio.Queue()
@@ -1134,8 +1141,8 @@ def test_produce_agent_stream_async_appends_missing_suffix_when_final_text_exten
     ]
 
     assert token_items == [
-        {"kind": "token", "text": "Прив"},
-        {"kind": "token", "text": "ет!"},
+        {"kind": "token", "text": "Hel"},
+        {"kind": "token", "text": "lo!"},
     ]
 
 
@@ -1171,7 +1178,7 @@ def test_produce_agent_stream_async_falls_back_to_text_block_content(
                 {
                     "messages": [
                         streaming.AIMessage(
-                            content=[{"type": "text", "text": "Привет из блока!"}]
+                            content=[{"type": "text", "text": "Hello from a content block!"}]
                         )
                     ]
                 },
@@ -1194,7 +1201,7 @@ def test_produce_agent_stream_async_falls_back_to_text_block_content(
 
     items = asyncio.run(exercise())
 
-    assert {"kind": "token", "text": "Привет из блока!"} in items
+    assert {"kind": "token", "text": "Hello from a content block!"} in items
 
 
 def test_produce_agent_stream_async_ignores_malformed_model_response_layout(monkeypatch) -> None:
@@ -1264,7 +1271,7 @@ def test_produce_agent_stream_async_renders_model_response_layout(monkeypatch) -
                 "values",
                 {
                     "model_response_layout": {
-                        "blocks": [{"id": "c1", "type": "commentary", "content": "Готово"}]
+                        "blocks": [{"id": "c1", "type": "commentary", "content": "Done"}]
                     }
                 },
             )
@@ -1288,7 +1295,7 @@ def test_produce_agent_stream_async_renders_model_response_layout(monkeypatch) -
 
     assert {
         "kind": "blocks",
-        "blocks": [{"id": "c1", "type": "commentary", "format": "markdown", "content": "Готово"}],
+        "blocks": [{"id": "c1", "type": "commentary", "format": "markdown", "content": "Done"}],
     } in items
 
 
@@ -1312,7 +1319,7 @@ def test_produce_agent_stream_async_streams_pretty_json_text_as_plain_text(monke
             yield "messages", (streaming.AIMessageChunk(content="{\n  "), {})
             yield "messages", (streaming.AIMessageChunk(content='"blocks": [\n'), {})
             yield "messages", (
-                streaming.AIMessageChunk(content='{"id":"c1","type":"commentary","content":"Готово"}\n]}'),
+                streaming.AIMessageChunk(content='{"id":"c1","type":"commentary","content":"Done"}\n]}'),
                 {},
             )
             yield (
@@ -1320,7 +1327,7 @@ def test_produce_agent_stream_async_streams_pretty_json_text_as_plain_text(monke
                 {
                     "messages": [
                         streaming.AIMessage(
-                            content='{\n  "blocks": [\n{"id":"c1","type":"commentary","content":"Готово"}\n]}'
+                            content='{\n  "blocks": [\n{"id":"c1","type":"commentary","content":"Done"}\n]}'
                         )
                     ]
                 },
@@ -1345,7 +1352,7 @@ def test_produce_agent_stream_async_streams_pretty_json_text_as_plain_text(monke
 
     assert {"kind": "token", "text": "{\n  "} in items
     assert {"kind": "token", "text": '"blocks": [\n'} in items
-    assert {"kind": "token", "text": '{"id":"c1","type":"commentary","content":"Готово"}\n]}'} in items
+    assert {"kind": "token", "text": '{"id":"c1","type":"commentary","content":"Done"}\n]}'} in items
     assert not any(isinstance(item, dict) and item.get("kind") == "blocks" for item in items)
 
 

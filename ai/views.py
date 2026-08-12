@@ -142,7 +142,7 @@ async def run_chat(request: HttpRequest) -> DatastarResponse:
             {
                 "isWaitingResponse": True,
                 "thinkingSeconds": 0,
-                "UserFacingProgressMessage": "думает...",
+                "UserFacingProgressMessage": "is thinking...",
                 "chatSessionKey": chat_session_key,
             }
         )
@@ -322,7 +322,7 @@ async def run_chat(request: HttpRequest) -> DatastarResponse:
                     {
                         "isWaitingResponse": False,
                         "thinkingSeconds": 0,
-                        "UserFacingProgressMessage": "думает...",
+                        "UserFacingProgressMessage": "is thinking...",
                         "ThemeSwitchCommand": "",
                     }
                 )

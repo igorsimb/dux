@@ -33,8 +33,8 @@ def test_build_chat_log_path_uses_local_date_and_thread_suffix(
 def test_format_chat_log_turn_builds_readable_plain_text_block(settings) -> None:
     now = datetime(2026, 3, 24, 14, 8, 11, tzinfo=ZoneInfo("Europe/Moscow"))
 
-    assert format_chat_log_turn("Привет", "Здравствуйте", now=now) == (
-        "[2026-03-24 14:08:11]\nUser: Привет\nAI: Здравствуйте\n\n"
+    assert format_chat_log_turn("Hello", "Hello!", now=now) == (
+        "[2026-03-24 14:08:11]\nUser: Hello\nAI: Hello!\n\n"
     )
 
 
@@ -45,13 +45,13 @@ def test_append_chat_log_turn_creates_parent_and_appends_turns(
     now = datetime(2026, 3, 24, 14, 8, 11, tzinfo=ZoneInfo("Europe/Moscow"))
 
     path = append_chat_log_turn(
-        "i.dolgikh", "chat-thread-123456aa7a", "Привет", "Здравствуйте", now=now
+        "i.dolgikh", "chat-thread-123456aa7a", "Hello", "Hello!", now=now
     )
     second_path = append_chat_log_turn(
         "i.dolgikh",
         "chat-thread-123456aa7a",
-        "Что умеешь?",
-        "Помогаю с данными.",
+        "What can you do?",
+        "I can help with data.",
         now=now,
     )
 
@@ -60,11 +60,11 @@ def test_append_chat_log_turn_creates_parent_and_appends_turns(
     assert path.read_text(encoding="utf-8") == (
         f"Conversation: {build_public_conversation_code('chat-thread-123456aa7a')}\n\n"
         "[2026-03-24 14:08:11]\n"
-        "User: Привет\n"
-        "AI: Здравствуйте\n\n"
+        "User: Hello\n"
+        "AI: Hello!\n\n"
         "[2026-03-24 14:08:11]\n"
-        "User: Что умеешь?\n"
-        "AI: Помогаю с данными.\n\n"
+        "User: What can you do?\n"
+        "AI: I can help with data.\n\n"
     )
 
 
@@ -75,7 +75,7 @@ def test_append_chat_log_turn_keeps_existing_filename_convention(
     now = datetime(2026, 3, 24, 14, 8, 11, tzinfo=ZoneInfo("Europe/Moscow"))
 
     path = append_chat_log_turn(
-        "i.dolgikh", "chat-thread-123456aa7a", "Привет", "Здравствуйте", now=now
+        "i.dolgikh", "chat-thread-123456aa7a", "Hello", "Hello!", now=now
     )
 
     assert path.name == "24-03-2026-6aa7a.txt"
@@ -98,7 +98,7 @@ def test_append_chat_log_turn_returns_none_and_logs_warning_on_write_failure(
     )
 
     result = append_chat_log_turn(
-        "i.dolgikh", "chat-thread-123456aa7a", "Привет", "Здравствуйте", now=now
+        "i.dolgikh", "chat-thread-123456aa7a", "Hello", "Hello!", now=now
     )
 
     assert result is None

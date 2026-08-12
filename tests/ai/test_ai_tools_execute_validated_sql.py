@@ -255,7 +255,7 @@ def test_execute_validated_sql_formats_raw_sql_for_answer_details(monkeypatch) -
 
     class Tool:
         def run_structured(self, query):
-            return [{"Дата": "2026-07-06", "Строк": 4}]
+            return [{"Date": "2026-07-06", "Rows": 4}]
 
     monkeypatch.setattr(ai_tools, "get_run_query_tool_for_source", lambda source_id: Tool())
     runtime = runtime_with_state(
@@ -263,7 +263,7 @@ def test_execute_validated_sql_formats_raw_sql_for_answer_details(monkeypatch) -
             "validated_queries": {
                 "vid-1": {
                     "sql": (
-                        'SELECT event_date AS "Дата", count() AS "Строк" '
+                        'SELECT event_date AS "Date", count() AS "Rows" '
                         "FROM analytics.sales_fact "
                         "WHERE event_date >= today() - 4 AND event_date <= today() "
                         "GROUP BY event_date ORDER BY event_date ASC"
@@ -292,8 +292,8 @@ def test_execute_validated_sql_formats_raw_sql_for_answer_details(monkeypatch) -
 def test_submit_model_response_layout_stores_app_owned_layout_and_short_tool_message() -> None:
     layout = {
         "blocks": [
-            {"id": "c1", "type": "commentary", "content": "Вот результат."},
-            {"id": "p1", "type": "data_table_placeholder", "title": "Продажи"},
+            {"id": "c1", "type": "commentary", "content": "Here is the result."},
+            {"id": "p1", "type": "data_table_placeholder", "title": "Sales"},
         ]
     }
     assert ai_tools.submit_model_response_layout.return_direct is True
@@ -304,15 +304,15 @@ def test_submit_model_response_layout_stores_app_owned_layout_and_short_tool_mes
     assert result.update is not None
     assert result.update["model_response_layout"] == {
         "blocks": [
-            {"id": "c1", "type": "commentary", "format": "markdown", "content": "Вот результат."},
-            {"id": "p1", "type": "data_table_placeholder", "title": "Продажи"},
+            {"id": "c1", "type": "commentary", "format": "markdown", "content": "Here is the result."},
+            {"id": "p1", "type": "data_table_placeholder", "title": "Sales"},
         ]
     }
     tool_message = result.update["messages"][0]
     assert isinstance(tool_message, ToolMessage)
     assert tool_message.name == "submit_model_response_layout"
     assert tool_message.content == "Final SQL layout submitted."
-    assert "Вот результат" not in tool_message.content
+    assert "Here is the result" not in tool_message.content
 
 
 def test_submit_model_response_layout_rejects_malformed_layout() -> None:
@@ -330,8 +330,8 @@ def test_submit_model_response_layout_schema_rejects_model_friendly_aliases() ->
             {
                 "layout": {
                     "blocks": [
-                        {"type": "commentary", "text": "Посмотрел продажи."},
-                        {"type": "data_table_placeholder", "title": "Продажи", "data_table_id": "sql-result-1"},
+                        {"type": "commentary", "text": "Reviewed sales."},
+                        {"type": "data_table_placeholder", "title": "Sales", "data_table_id": "sql-result-1"},
                     ]
                 }
             }

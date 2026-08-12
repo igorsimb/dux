@@ -18,7 +18,7 @@ from .memory_middleware import trim_chat_history_middleware
 def build_chat_agent(model: Any, tools: list[Any]):
     """Build the guarded chat agent used by the web view.
 
-    The SQL system prompt (SYSTEM_PROMPT_RU_SARCASTIC) is the default prompt
+    The SQL system prompt (SYSTEM_PROMPT_SARCASTIC) is the default prompt
     passed to `create_agent(...)`. Chat history trimming runs first, then
     human-in-the-loop protection can pause unsafe tool calls, and finally
     intent-routing middleware can swap the prompt and available tools for
@@ -28,14 +28,14 @@ def build_chat_agent(model: Any, tools: list[Any]):
     return create_agent(
         model=model,
         tools=tools,
-        system_prompt=ai_prompts.SYSTEM_PROMPT_RU_SARCASTIC,
+        system_prompt=ai_prompts.SYSTEM_PROMPT_SARCASTIC,
         middleware=[
             trim_chat_history_middleware,
             HumanInTheLoopMiddleware(
                 interrupt_on={"ask_user": {"allowed_decisions": ["respond"]}},
             ),
             build_intent_routing_middleware(
-                tools, ai_prompts.SYSTEM_PROMPT_RU_SARCASTIC
+                tools, ai_prompts.SYSTEM_PROMPT_SARCASTIC
             ),
         ],
         state_schema=ChatAgentState,

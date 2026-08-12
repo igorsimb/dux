@@ -6,6 +6,8 @@ Flow:
 - Validate catalog hygiene (non-empty, trimmed strings) without pinning exact wording.
 """
 
+import re
+
 import pytest
 
 from ai.ai_utils import progress_messages as pm
@@ -21,6 +23,10 @@ def test_show_progress_message_forwards_text_to_writer() -> None:
     pm.show_progress_message(writer=_writer, stage="stage-text")
 
     assert captured == ["stage-text"]
+
+
+def test_default_progress_fallback_uses_present_continuous() -> None:
+    assert pm.DEFAULT_PROGRESS_FALLBACK_MESSAGE.startswith("is ")
 
 
 def _assert_stage_selector(monkeypatch, selector, stage, expected_bucket) -> None:
@@ -178,6 +184,8 @@ def test_message_catalog_contains_only_non_empty_strings(catalog) -> None:
             assert isinstance(phrase, str)
             assert phrase.strip() == phrase
             assert phrase
+            assert phrase.startswith("is ")
+            assert re.search(r"[\u0400-\u04FF]", phrase) is None
 
 
 @pytest.mark.parametrize(

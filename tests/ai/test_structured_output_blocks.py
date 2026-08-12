@@ -16,7 +16,7 @@ from ai.ai_utils.structured_output_blocks import (
 
 
 def test_commentary_block_validates_and_serializes() -> None:
-    block = CommentaryBlock(id="c1", content="Вот **результаты**:")
+    block = CommentaryBlock(id="c1", content="Here are the **results**:")
 
     assert block.type == "commentary"
     assert block.format == "markdown"
@@ -24,18 +24,18 @@ def test_commentary_block_validates_and_serializes() -> None:
         "id": "c1",
         "type": "commentary",
         "format": "markdown",
-        "content": "Вот **результаты**:",
+        "content": "Here are the **results**:",
     }
 
 
 def test_data_table_placeholder_validates_without_rows() -> None:
-    block = DataTablePlaceholderBlock(id="p1", title="Топ клиентов")
+    block = DataTablePlaceholderBlock(id="p1", title="Top customers")
 
     assert block.type == "data_table_placeholder"
     assert block.model_dump() == {
         "id": "p1",
         "type": "data_table_placeholder",
-        "title": "Топ клиентов",
+        "title": "Top customers",
         "notes": None,
     }
 
@@ -43,22 +43,22 @@ def test_data_table_placeholder_validates_without_rows() -> None:
 def test_data_table_placeholder_accepts_labeled_notes() -> None:
     block = DataTablePlaceholderBlock(
         id="p1",
-        title="Топ клиентов",
-        notes=[AnswerDetailNote(label="Период", value="последние 30 дней")],
+        title="Top customers",
+        notes=[AnswerDetailNote(label="Period", value="last 30 days")],
     )
 
     assert block.notes is not None
-    assert block.notes[0].label == "Период"
-    assert block.model_dump()["notes"] == [{"label": "Период", "value": "последние 30 дней"}]
+    assert block.notes[0].label == "Period"
+    assert block.model_dump()["notes"] == [{"label": "Period", "value": "last 30 days"}]
 
 
 def test_data_table_block_validates_and_serializes() -> None:
     block = DataTableBlock(
         id="t1",
-        title="Результаты запроса",
+        title="Query results",
         columns=[
-            TableColumn(key="customer", label="Клиент", type="string"),
-            TableColumn(key="qty", label="Количество", type="number"),
+            TableColumn(key="customer", label="Customer", type="string"),
+            TableColumn(key="qty", label="Quantity", type="number"),
         ],
         rows=[
             {"customer": "A", "qty": 10},
@@ -73,7 +73,7 @@ def test_data_table_block_validates_and_serializes() -> None:
                 tables=["dbo.customer_orders"],
                 raw_sql="SELECT * FROM dbo.customer_orders",
             ),
-            notes=[AnswerDetailNote(label="Метрика", value="количество продаж")],
+            notes=[AnswerDetailNote(label="Metric", value="sales count")],
         ),
     )
 
@@ -88,7 +88,7 @@ def test_data_table_block_validates_and_serializes() -> None:
     details = block.model_dump()["details"]
     assert details["facts"]["source_id"] == "mssql_default"
     assert details["facts"]["tables"] == ["dbo.customer_orders"]
-    assert details["notes"] == [{"label": "Метрика", "value": "количество продаж"}]
+    assert details["notes"] == [{"label": "Metric", "value": "sales count"}]
 
 
 def test_table_column_type_defaults_to_unknown() -> None:
@@ -118,8 +118,8 @@ def test_agent_commentary_response_accepts_commentary_and_placeholder_blocks() -
     response = AgentCommentaryResponse.model_validate(
         {
             "blocks": [
-                {"id": "c1", "type": "commentary", "content": "Вот результаты:"},
-                {"id": "p1", "type": "data_table_placeholder", "title": "Таблица"},
+                {"id": "c1", "type": "commentary", "content": "Here are the results:"},
+                {"id": "p1", "type": "data_table_placeholder", "title": "Table"},
             ]
         }
     )
@@ -149,11 +149,11 @@ def test_agent_final_response_accepts_commentary_and_data_table_blocks() -> None
     response = AgentFinalResponse.model_validate(
         {
             "blocks": [
-                {"id": "c1", "type": "commentary", "content": "Вот результаты:"},
+                {"id": "c1", "type": "commentary", "content": "Here are the results:"},
                 {
                     "id": "t1",
                     "type": "data_table",
-                    "columns": [{"key": "customer", "label": "Клиент"}],
+                    "columns": [{"key": "customer", "label": "Customer"}],
                     "rows": [{"customer": "A"}],
                     "meta": {"row_count": 1, "rendered_row_count": 1},
                 },

@@ -20,8 +20,8 @@ cross-source, or outside the allowlist are rejected before execution.
 
 ## Main features
 
-- Authenticated Russian-language chat UI built with Django, Datastar, and SSE
-- One LangGraph conversation with deterministic routing for SQL, small talk, and theme changes
+- Authenticated English-first chat UI built with Django, Datastar, and SSE
+- One LangGraph conversation with deterministic English/Russian routing for SQL, small talk, and theme changes
 - ClickHouse and Microsoft SQL Server source support
 - Deterministic read-only SQL validation with `sqlglot`
 - Per-source table allowlists and detailed metadata
@@ -79,7 +79,7 @@ Start the supported ASGI server:
 .venv/Scripts/python.exe -m daphne config.asgi:application
 ```
 
-Open the local address printed by Daphne and create an account through the Django authentication UI.
+Open the local address printed by Daphne and sign in with an account provisioned by an administrator.
 
 ## Environment variables
 
