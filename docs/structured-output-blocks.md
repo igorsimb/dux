@@ -6,7 +6,7 @@ accidentally omit, reshape, or invent table cells while preparing the final answ
 
 Structured output blocks move table rendering to a safer boundary:
 
-- the LLM writes Russian commentary and chooses where result tables belong in the answer
+- the LLM writes commentary and chooses where result tables belong in the answer
 - the backend owns SQL result rows, column metadata, row counts, and truncation
 - the UI renders each final block with the renderer that matches its type
 
@@ -57,7 +57,7 @@ This is a model-produced layout slot with `type="data_table_placeholder"`. It ca
 never includes columns or rows.
 
 It can also include optional `notes`. These are model-supplied user-facing explanations for the matched table, such as
-`Период`, `Фильтр`, `Метрика`, or `Интерпретация`. They are attached under `details.notes` only after the backend
+`Period`, `Filter`, `Metric`, or `Interpretation`. They are attached under `details.notes` only after the backend
 resolves the placeholder to a real `DataTableBlock`.
 
 During final assembly, the backend replaces placeholders positionally with backend-owned SQL result blocks.
@@ -86,8 +86,9 @@ This is the backend-produced table block. It contains:
 
 `build_data_table_block(...)` uses `DEFAULT_SQL_RESULT_ROW_LIMIT = 50` unless a smaller explicit query limit applies.
 
-Raw SQL in `details.facts.raw_sql` is formatted with the same backend formatter used for SQL execution logs. The UI shows
-it inside the nested `Показать SQL` section when permitted, and authorized users can copy it from the table details panel.
+Raw SQL in `details.facts.raw_sql` is formatted with the same backend formatter used for SQL execution logs. The UI
+shows it inside the nested `Show SQL` section when permitted, and authorized users can copy it from the table details
+panel.
 
 ## Placeholder resolution
 
@@ -95,7 +96,7 @@ Final block assembly happens in `ai/ai_utils/streaming.py` through `build_final_
 
 Resolution is positional:
 
-1. Read `sql_result_blocks` from graph state.
+1. Read `sql_result_table_blocks` from graph state.
 2. Validate each stored block as a `DataTableBlock`.
 3. Walk the LLM's `AgentCommentaryResponse.blocks` in order.
 4. Keep `commentary` blocks as-is.
@@ -103,15 +104,15 @@ Resolution is positional:
 6. If the placeholder has a title and the backend table does not, copy that title onto the rendered table block.
 7. Append any extra backend-owned table blocks that were not matched by placeholders.
 
-If a placeholder includes `notes`, those notes are copied to the matched table's `details.notes`. Notes are rendered after
-backend-owned rows in the `Детали` panel. Notes whose labels collide with backend-owned detail labels are filtered out:
-`Источник`, `Таблицы`, `Строк показано`, and `SQL`.
+If a placeholder includes `notes`, those notes are copied to the matched table's `details.notes`. Notes are rendered
+after backend-owned rows in the `Details` panel. Notes whose labels collide with backend-owned detail labels are
+filtered out: `Source`, `Tables`, `Rows shown`, and `SQL`.
 
-`ChatAgentState` declares `sql_result_blocks` in `ai/ai_utils/agent_state.py`. That declaration is required so LangGraph
-preserves table blocks produced by the SQL tool until final response assembly.
+`ChatAgentState` declares `sql_result_table_blocks` in `ai/ai_utils/agent_state.py`. That declaration is required so
+LangGraph preserves table blocks produced by the SQL tool until final response assembly.
 
-Fresh user turns start with `sql_result_blocks: []`, which prevents a table from an earlier turn from leaking into a
-later answer.
+Fresh user turns start with `sql_result_table_blocks: []`, which prevents a table from an earlier turn from leaking
+into a later answer.
 
 ## Error and edge-case behavior
 
@@ -127,9 +128,9 @@ Unmatched placeholders are skipped. If the LLM emits a `data_table_placeholder` 
 table block, `build_final_response_blocks(...)` logs a warning and drops that placeholder instead of showing a confusing
 missing-table error to the user.
 
-Malformed `sql_result_blocks` are skipped. If graph state contains a block that does not validate as `DataTableBlock`,
-final assembly logs a warning and continues with the remaining valid blocks. A malformed stored block should not crash
-final rendering.
+Malformed `sql_result_table_blocks` are skipped. If graph state contains a block that does not validate as
+`DataTableBlock`, final assembly logs a warning and continues with the remaining valid blocks. A malformed stored block
+should not crash final rendering.
 
 SQL cell values are serialized safely for the HTML attribute that stores raw blocks. `ai/ai_utils/ui.py` uses
 `json.dumps(..., default=str)` for `data-chat-blocks`, so values such as `Decimal` do not break response rendering.
@@ -153,12 +154,12 @@ Data tables are rendered by the server for live responses. On same-tab restore, 
 Instead, `sessionStorage` stores raw final `blocks` JSON, and `ai/templates/ai/ai_main.html` rebuilds commentary and
 table DOM nodes from that JSON. This keeps restore tied to the block contract instead of a snapshot of old markup.
 
-Each `data_table` block may render one local collapsed `Детали` panel. The backend-owned visible rows are:
+Each `data_table` block may render one local collapsed `Details` panel. The backend-owned visible rows are:
 
-- `Источник`
-- `Таблицы`
-- `Строк показано`
-- nested `Показать SQL`, when raw SQL is permitted
+- `Source`
+- `Tables`
+- `Rows shown`
+- nested `Show SQL`, when raw SQL is permitted
 
 Model notes from `details.notes` render after those backend-owned rows.
 
@@ -174,11 +175,11 @@ The default permission groups are migration-created in `core/migrations/0002_ans
 - `AI answer notes viewers`
 - `AI raw SQL viewers`
 
-Same-tab restore uses the saved, permission-filtered block JSON, so restored `Детали` panels match what the server was
+Same-tab restore uses the saved, permission-filtered block JSON, so restored `Details` panels match what the server was
 allowed to send for that user.
 
 Chatlogs remain plain visible text. `build_blocks_visible_text(...)` keeps commentary text and writes each table as a
-compact summary such as `[Таблица: ..., строк показано: ... из ...]`.
+compact summary such as `[Table: ..., rows shown: ... of ...]`.
 
 Structured JSON chunks from the model are suppressed during token streaming. Users should not see raw
 `{"blocks": ...}` payloads while the final structured response is being assembled, including pretty-printed JSON with
@@ -213,7 +214,7 @@ The main implementation files are:
 - `ai/templates/ai/ai_main.html` - client-side markdown rendering, transcript persistence, same-tab block restore, and
   restored details/SQL copy UI
 - `ai/templates/ai/partials/commentary_block.html` - commentary partial
-- `ai/templates/ai/partials/data_table_block.html` - data table partial and live `Детали` panel
+- `ai/templates/ai/partials/data_table_block.html` - data table partial and live `Details` panel
 - `core/models.py` - answer detail permission declarations
 - `core/migrations/0002_answer_details_permissions.py` - default answer detail groups
 

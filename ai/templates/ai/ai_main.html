@@ -1,6 +1,6 @@
 {% extends "core/base.html" %}
 
-{% block title %}Dux Чат{% endblock %}
+{% block title %}Dux Chat{% endblock %}
 
 {% block content %}
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -106,7 +106,7 @@
             const getMessagesStorageKey = (chatSessionKey) => `chat-ui:${chatSessionKey}:messages`;
             const getUsageStorageKey = (chatSessionKey) => `chat-ui:${chatSessionKey}:usage`;
             const TABLE_COPY_RESET_MS = 1500;
-            const RESERVED_ANSWER_DETAIL_NOTE_LABELS = new Set(["sql", "источник", "строк показано", "таблицы"]);
+            const RESERVED_ANSWER_DETAIL_NOTE_LABELS = new Set(["sql", "source", "rows shown", "tables"]);
             const TABLE_COPY_ICONS = {
                 copy: [
                     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"',
@@ -201,13 +201,13 @@
                     "group-hover:opacity-100 focus-visible:opacity-100",
                 ].join(" "),
                 datasetKey: "tableCopyButton",
-                defaultLabel: "Скопировать таблицу",
+                defaultLabel: "Copy table",
             });
 
             const createSqlCopyButton = () => createCopyButton({
                 className: "btn btn-ghost btn-xs sql-copy-button",
                 datasetKey: "sqlCopyButton",
-                defaultLabel: "Скопировать SQL",
+                defaultLabel: "Copy SQL",
             });
 
             const setCopyButtonState = (button, state, labels) => {
@@ -230,14 +230,14 @@
             };
 
             const TABLE_COPY_LABELS = {
-                default: "Скопировать таблицу",
-                success: "Таблица скопирована",
-                error: "Не удалось скопировать таблицу",
+                default: "Copy table",
+                success: "Table copied",
+                error: "Could not copy table",
             };
             const SQL_COPY_LABELS = {
-                default: "Скопировать SQL",
-                success: "SQL скопирован",
-                error: "Не удалось скопировать SQL",
+                default: "Copy SQL",
+                success: "SQL copied",
+                error: "Could not copy SQL",
             };
 
             const setTableCopyButtonState = (button, state) => setCopyButtonState(button, state, TABLE_COPY_LABELS);
@@ -405,7 +405,7 @@
                     if (!note || typeof note !== "object") return [];
                     const label = typeof note.label === "string" ? note.label.trim() : "";
                     const value = typeof note.value === "string" ? note.value.trim() : "";
-                    const normalizedLabel = label.toLocaleLowerCase("ru-RU").replace(/:$/, "").trim();
+                    const normalizedLabel = label.toLowerCase().replace(/:$/, "").trim();
                     if (RESERVED_ANSWER_DETAIL_NOTE_LABELS.has(normalizedLabel)) {
                         return [];
                     }
@@ -442,15 +442,15 @@
                 wrapper.className = "rounded-box border border-base-300 bg-base-200/40 px-3 py-2 text-sm";
                 const summary = document.createElement("summary");
                 summary.className = "cursor-pointer select-none text-xs font-medium opacity-80";
-                summary.textContent = "Детали";
+                summary.textContent = "Details";
                 const content = document.createElement("div");
                 content.className = "mt-2 space-y-2 text-xs";
                 const list = document.createElement("dl");
                 list.className = "grid gap-1 sm:grid-cols-[max-content_1fr]";
 
-                if (details.sourceId) appendDetailRow(list, "Источник:", details.sourceId);
-                if (details.tables.length) appendDetailRow(list, "Таблицы:", details.tables.join(", "));
-                appendDetailRow(list, "Строк показано:", `${details.renderedRowCount} из ${details.rowCount}`);
+                if (details.sourceId) appendDetailRow(list, "Source:", details.sourceId);
+                if (details.tables.length) appendDetailRow(list, "Tables:", details.tables.join(", "));
+                appendDetailRow(list, "Rows shown:", `${details.renderedRowCount} of ${details.rowCount}`);
                 details.notes.forEach((note) => appendDetailRow(list, `${note.label}:`, note.value));
                 content.appendChild(list);
 
@@ -460,7 +460,7 @@
                     sqlDetails.dataset.sqlDetails = "true";
                     const sqlSummary = document.createElement("summary");
                     sqlSummary.className = "cursor-pointer select-none font-medium opacity-80";
-                    sqlSummary.textContent = "Показать SQL";
+                    sqlSummary.textContent = "Show SQL";
                     const sqlActions = document.createElement("div");
                     sqlActions.className = "mt-2 flex justify-end";
                     sqlActions.appendChild(createSqlCopyButton());
@@ -486,7 +486,7 @@
                 const columns = Array.isArray(block.columns) ? block.columns : [];
                 const rows = Array.isArray(block.rows) ? block.rows : [];
                 const meta = block.meta && typeof block.meta === "object" ? block.meta : {};
-                const title = typeof block.title === "string" && block.title ? block.title : "Результаты запроса";
+                const title = typeof block.title === "string" && block.title ? block.title : "Query results";
                 const renderedRowCount = Number.isFinite(Number(meta.rendered_row_count))
                     ? Number(meta.rendered_row_count)
                     : rows.length;
@@ -500,11 +500,11 @@
                 heading.textContent = title;
                 const summary = document.createElement("div");
                 summary.className = "text-xs opacity-70";
-                summary.textContent = `Показано строк: ${renderedRowCount} из ${rowCount}`;
+                summary.textContent = `Rows shown: ${renderedRowCount} of ${rowCount}`;
                 if (meta.truncated) {
                     const badge = document.createElement("span");
                     badge.className = "badge badge-warning badge-sm ml-1";
-                    badge.textContent = "сокращено";
+                    badge.textContent = "truncated";
                     summary.appendChild(badge);
                 }
                 const summaryActions = document.createElement("div");
@@ -519,7 +519,7 @@
                         "rounded-box border border-dashed border-base-300 bg-base-200/60",
                         "p-3 text-sm opacity-80",
                     ].join(" ");
-                    emptyState.textContent = "По этому запросу нет строк для отображения.";
+                    emptyState.textContent = "No rows to display for this query.";
                     element.appendChild(emptyState);
                     const detailsBlock = createDataTableDetailsBlock(details);
                     if (detailsBlock) element.appendChild(detailsBlock);
@@ -764,44 +764,44 @@
     <div
             id="chat-app"
             class="flex mx-2 h-[calc(100dvh-5.7rem)] min-h-0 flex-col md:mx-4 md:h-[calc(100dvh-6.7rem)] lg:mx-6 lg:h-[calc(100dvh-6.7rem)] xl:mx-8"
-            data-signals="{ isWaitingResponse: false, thinkingSeconds: 0, UserFacingProgressMessage: 'думает...', ThemeSwitchCommand: '', LatestUsageModel: '{{ ai_model_name|escapejs }}', sessionInputTokens: 0, sessionInputTokensText: '0', sessionOutputTokens: 0, sessionOutputTokensText: '0', sessionTotalTokens: 0, sessionHasCost: false, sessionCostUsd: 0, sessionCostUsdText: '0', sessionTokenBadgeText: '' }"
+            data-signals="{ isWaitingResponse: false, thinkingSeconds: 0, UserFacingProgressMessage: 'is thinking...', ThemeSwitchCommand: '', LatestUsageModel: '{{ ai_model_name|escapejs }}', sessionInputTokens: 0, sessionInputTokensText: '0', sessionOutputTokens: 0, sessionOutputTokensText: '0', sessionTotalTokens: 0, sessionHasCost: false, sessionCostUsd: 0, sessionCostUsdText: '0', sessionTokenBadgeText: '' }"
             data-signals:chat-session-key__ifmissing="sessionStorage.getItem('chatSessionKey') || window.aiChatSessionUi.newChatSessionKey()"
             data-init="if ($chatSessionKey) sessionStorage.setItem('chatSessionKey', $chatSessionKey); window.aiChatSessionUi.ensureTranscriptObserver(); window.aiChatSessionUi.restoreTranscript($chatSessionKey); const usage = window.aiChatSessionUi.loadUsageState($chatSessionKey); $LatestUsageModel = usage.LatestUsageModel || $LatestUsageModel; $sessionInputTokens = usage.sessionInputTokens || 0; $sessionInputTokensText = usage.sessionInputTokensText || '0'; $sessionOutputTokens = usage.sessionOutputTokens || 0; $sessionOutputTokensText = usage.sessionOutputTokensText || '0'; $sessionTotalTokens = usage.sessionTotalTokens || 0; $sessionHasCost = !!usage.sessionHasCost; $sessionCostUsd = usage.sessionCostUsd || 0; $sessionCostUsdText = usage.sessionCostUsdText || '0'; $sessionTokenBadgeText = usage.sessionTokenBadgeText || '';"
             data-effect="if ($chatSessionKey) sessionStorage.setItem('chatSessionKey', $chatSessionKey); sessionStorage.setItem(`chat-ui:${$chatSessionKey}:usage`, JSON.stringify({ LatestUsageModel: $LatestUsageModel, sessionInputTokens: $sessionInputTokens, sessionInputTokensText: $sessionInputTokensText, sessionOutputTokens: $sessionOutputTokens, sessionOutputTokensText: $sessionOutputTokensText, sessionTotalTokens: $sessionTotalTokens, sessionHasCost: $sessionHasCost, sessionCostUsd: $sessionCostUsd, sessionCostUsdText: $sessionCostUsdText, sessionTokenBadgeText: $sessionTokenBadgeText }));"
-            data-on:ai-new-chat-requested="if ($isWaitingResponse) return; $chatSessionKey = window.aiChatSessionUi.startNewChat(); $userInput = ''; $thinkingSeconds = 0; $UserFacingProgressMessage = 'думает...'; $LatestUsageModel = '{{ ai_model_name|escapejs }}'; $sessionInputTokens = 0; $sessionInputTokensText = '0'; $sessionOutputTokens = 0; $sessionOutputTokensText = '0'; $sessionTotalTokens = 0; $sessionHasCost = false; $sessionCostUsd = 0; $sessionCostUsdText = '0'; $sessionTokenBadgeText = '';"
+            data-on:ai-new-chat-requested="if ($isWaitingResponse) return; $chatSessionKey = window.aiChatSessionUi.startNewChat(); $userInput = ''; $thinkingSeconds = 0; $UserFacingProgressMessage = 'is thinking...'; $LatestUsageModel = '{{ ai_model_name|escapejs }}'; $sessionInputTokens = 0; $sessionInputTokensText = '0'; $sessionOutputTokens = 0; $sessionOutputTokensText = '0'; $sessionTotalTokens = 0; $sessionHasCost = false; $sessionCostUsd = 0; $sessionCostUsdText = '0'; $sessionTokenBadgeText = '';"
     >
         <div class="mb-2 flex items-start justify-between gap-3 md:mb-3">
             <h3 class="text-xl font-semibold leading-tight tracking-tight md:text-2xl">
-                Умный помощник по работе с данными
+                Smart data assistant
             </h3>
             <div class="mt-1 flex shrink-0 items-center gap-2">
                 <div class="dropdown dropdown-end dropdown-hover" style="display: none" data-show="$sessionTotalTokens > 0">
                     <button type="button"
                             tabindex="0"
                             class="badge badge-outline badge-sm border-base-300 bg-base-100/80 font-mono tabular-nums text-xs opacity-80 transition-opacity hover:opacity-100 focus-visible:opacity-100"
-                            aria-label="Показать расход токенов за сессию"
+                            aria-label="Show session token usage"
                             data-text="$sessionTokenBadgeText">
-                        0 ток
+                        0 tokens
                     </button>
                     <div tabindex="0" class="dropdown-content z-20 mt-2 w-48 rounded-box border border-base-300 bg-base-100/95 p-3 text-sm shadow-xl backdrop-blur">
-                        <div class="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] opacity-50">Токены (сессия)</div>
+                        <div class="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] opacity-50">Session tokens</div>
                         <div class="mb-3 rounded-md bg-base-200/70 px-2 py-1 text-[11px] leading-tight opacity-65"
                              style="display: none"
                              data-show="$LatestUsageModel">
-                            <span class="mr-1 uppercase tracking-[0.14em]">Модель</span>
+                            <span class="mr-1 uppercase tracking-[0.14em]">Model</span>
                             <span class="font-mono break-all" data-text="$LatestUsageModel">{{ ai_model_name }}</span>
                         </div>
                         <div class="flex items-center justify-between gap-3">
-                            <span class="opacity-70">Входящие</span>
+                            <span class="opacity-70">Input</span>
                             <span class="font-mono tabular-nums" data-text="$sessionInputTokensText">0</span>
                         </div>
                         <div class="mt-1 flex items-center justify-between gap-3">
-                            <span class="opacity-70">Исходящие</span>
+                            <span class="opacity-70">Output</span>
                             <span class="font-mono tabular-nums" data-text="$sessionOutputTokensText">0</span>
                         </div>
                         <div class="mt-2 border-t border-base-300 pt-2" style="display: none" data-show="$sessionHasCost">
                             <div class="flex items-center justify-between gap-3">
-                                <span class="opacity-70">Стоимость</span>
+                                <span class="opacity-70">Cost</span>
                                 <span class="font-mono tabular-nums">$<span data-text="$sessionCostUsdText">0</span></span>
                             </div>
                         </div>
@@ -811,71 +811,70 @@
                         type="button"
                         class="btn btn-outline btn-info btn-sm shrink-0"
                         onclick="document.getElementById('demoHelpModal').showModal()"
-                        aria-label="Показать подсказки"
+                        aria-label="Show help"
                 >
-                    Подсказки
+                    Help
                 </button>
             </div>
         </div>
 
         <dialog class="modal" id="demoHelpModal">
             <div class="modal-box max-w-3xl">
-                <h5 class="text-lg font-semibold" id="demoHelpModalLabel">Подсказки</h5>
-                <p class="mb-3 mt-2 text-sm opacity-70">Как получить более полезный ответ</p>
+                <h5 class="text-lg font-semibold" id="demoHelpModalLabel">Help</h5>
+                <p class="mb-3 mt-2 text-sm opacity-70">How to get a more useful answer</p>
                 <ul class="mb-3 list-disc space-y-2 pl-5 text-sm leading-6">
-                    <li>VPN не нужен.</li>
-                    <li>Ответы нужно перепроверять: как и любая нейросеть, Dux может ошибаться.</li>
-                    <li>По возможности давайте больше контекста: источник, таблицу, поля, период, метрику и нужный формат ответа.</li>
-                    <li>Если название клиента, товара или категории может отличаться, попросите учесть варианты написания.</li>
+                    <li>Double-check answers: like any AI system, Dux can make mistakes.</li>
+                    <li>Include context when possible: the source, table, fields, period, metric, and desired format.</li>
+                    <li>If a customer, product, or category name may vary, ask Dux to consider alternative spellings.</li>
                     <li>
-                        По умолчанию робот показывает до 50 строк. Если нужно больше, скажите число: «покажи 200».
+                        Dux shows up to 50 rows by default. To see more, specify a number, such as "show 200."
                     </li>
-                    <li>Если ответ не пришел или выглядит странно, попробуйте задать вопрос еще раз.</li>
-                    <li>Если нужно резко сменить задачу, начните новый чат, чтобы не путать с предыдущим запросом.</li>
-                    <li>Если робот повторяется, подождите. Если не помогает, начните новый чат.</li>
+                    <li>If no answer appears or it looks unusual, try asking again.</li>
+                    <li>When switching to a substantially different task, start a new chat.</li>
+                    <li>If Dux repeats itself, wait a moment. If that does not help, start a new chat.</li>
                 </ul>
                 <div class="alert alert-info" role="alert">
-                    Робот помнит текущий разговор в рамках активной вкладки браузера. В новой вкладке начнется новая сессия.
-                    Также можно начать новую сессию с помощью кнопки «Новый чат».
+                    Dux remembers the current conversation within the active browser tab. A new tab starts a new session.
+                    You can also start a new session with the "New chat" button.
                 </div>
                 <div class="mt-3">
-                    <div class="mb-2 font-semibold">Примеры запросов для старта:</div>
+                    <div class="mb-2 font-semibold">Example prompts:</div>
                     <ul class="list-decimal space-y-2 pl-5 text-sm leading-6">
-                        <li>Проследи тенденции продаж по количеству и сумме продаж за последние 30 дней и сделай выводы.</li>
-                        <li>Покажи топ-10 клиентов за последние 7 дней по общей сумме заказов.</li>
-                        <li>Сравни продажи по регионам за последние 30 дней по количеству и выручке.</li>
-                        <li>Покажи топ-10 товаров по количеству продаж за последние 2 недели.</li>
-                        <li>Покажи средний чек и число заказов по месяцам за текущий год.</li>
-                        <li>Найди категории товаров, в которых продажи снизились относительно прошлого месяца.</li>
-                        <li>Покажи 20 заказов с самой большой суммой за последний месяц.</li>
+                        <li>Analyze sales trends by quantity and revenue over the last 30 days and summarize the findings.</li>
+                        <li>Show the top 10 customers by total order value over the last 7 days.</li>
+                        <li>Compare regional sales by quantity and revenue over the last 30 days.</li>
+                        <li>Show the top 10 products by sales quantity over the last 2 weeks.</li>
+                        <li>Show average order value and monthly order count for the current year.</li>
+                        <li>Find product categories whose sales declined compared with last month.</li>
+                        <li>Show the 20 highest-value orders from the last month.</li>
                     </ul>
                 </div>
                 <div class="modal-action">
                     <form method="dialog">
-                        <button type="submit" class="btn">Понятно</button>
+                        <button type="submit" class="btn">Got it</button>
                     </form>
                 </div>
             </div>
             <form method="dialog" class="modal-backdrop">
-                <button aria-label="Закрыть">Закрыть</button>
+                <button aria-label="Close">Close</button>
             </form>
         </dialog>
 
         <template id="chat-default-content-template">
             <div class="chat chat-start" data-chat-static="true">
                 <div class="chat-header mb-1 text-xs opacity-70">Dux</div>
-                <div class="chat-bubble text-sm leading-6 md:text-base">Привет, {{ request.user }}! Задавай вопрос.</div>
+                <div class="chat-bubble text-sm leading-6 md:text-base">Hello, {{ request.user }}! Ask a question.</div>
             </div>
             <div class="flex flex-wrap items-center gap-2" data-chat-static="true">
-                <div class="text-xs opacity-70 md:text-sm">Хочешь быстро понять мои возможности? Кликай на</div>
+                <div class="text-xs opacity-70 md:text-sm">Want a quick overview of what I can do? Select</div>
                 <button
                         data-attr:disabled="$isWaitingResponse"
                         type="button"
                         class="btn btn-success btn-sm"
                         data-indicator:is-waiting-response
-                        data-on:click="if ($isWaitingResponse) return; $userInput='Коротко опиши, что ты умеешь. Дай 5-7 пунктов и 3 примера вопросов о продажах, заказах, клиентах, товарах и остатках. Также укажи свои ограничения.'; @get('{% url "run_chat" %}', { openWhenHidden: true }); $userInput='';"
+                        data-on:click="if ($isWaitingResponse) return; $userInput='Briefly describe what you can do. Give 5-7 points and 3 example questions about sales, orders, customers, products, and inventory. Also mention your limitations.'; @get('{% url "run_chat" %}', { openWhenHidden: true }); $userInput='';"
                 >
-                    Что ты умеешь?
+                    What can you do?
                 </button>
             </div>
         </template>
@@ -887,18 +886,18 @@
                     <div id="chat-messages" class="flex flex-col gap-3">
                         <div class="chat chat-start" data-chat-static="true">
                             <div class="chat-header mb-1 text-xs opacity-70">Dux</div>
-                            <div class="chat-bubble text-sm leading-6 md:text-base">Привет, {{ request.user }}! Задавай вопрос.</div>
+                            <div class="chat-bubble text-sm leading-6 md:text-base">Hello, {{ request.user }}! Ask a question.</div>
                         </div>
                         <div class="flex flex-wrap items-center gap-2" data-chat-static="true">
-                            <div class="text-xs opacity-70 md:text-sm">Хочешь быстро понять мои возможности? Кликай на</div>
+                            <div class="text-xs opacity-70 md:text-sm">Want a quick overview of what I can do? Select</div>
                             <button
                                     data-attr:disabled="$isWaitingResponse"
                                     type="button"
                                     class="btn btn-success btn-sm"
                                     data-indicator:is-waiting-response
-                                    data-on:click="if ($isWaitingResponse) return; $userInput='Коротко опиши, что ты умеешь. Дай 5-7 пунктов и 3 примера вопросов о продажах, заказах, клиентах, товарах и остатках. Также укажи свои ограничения.'; @get('{% url "run_chat" %}', { openWhenHidden: true }); $userInput='';"
+                                    data-on:click="if ($isWaitingResponse) return; $userInput='Briefly describe what you can do. Give 5-7 points and 3 example questions about sales, orders, customers, products, and inventory. Also mention your limitations.'; @get('{% url "run_chat" %}', { openWhenHidden: true }); $userInput='';"
                             >
-                                Что ты умеешь?
+                                What can you do?
                             </button>
                         </div>
                     </div>
@@ -906,9 +905,9 @@
                 <div class="alert alert-info py-2 text-sm" style="display: none" data-show="$isWaitingResponse">
                     <div class="flex flex-wrap items-center gap-x-1.5 gap-y-1">
                         <span>Dux</span>
-                        <span class="font-medium" data-text="$UserFacingProgressMessage">думает...</span>
+                        <span class="font-medium" data-text="$UserFacingProgressMessage">is thinking...</span>
                         <span class="badge badge-ghost badge-sm font-mono tabular-nums opacity-70">
-                            <span data-text="$thinkingSeconds">0</span> сек.
+                            <span data-text="$thinkingSeconds">0</span> sec.
                         </span>
                     </div>
                 </div>
@@ -918,18 +917,18 @@
                     <textarea
                             data-bind:user-input
                             class="textarea textarea-bordered w-full min-h-0 leading-6"
-                            placeholder="Введите сообщение..."
-                            aria-label="Сообщение"
+                            placeholder="Type a message..."
+                            aria-label="Message"
                             data-on:keydown="if (evt.key === 'Enter' && !evt.shiftKey) { evt.preventDefault(); if ($isWaitingResponse) return; evt.target.form.requestSubmit(); }"
                             autofocus
                             rows="1"
                             style="field-sizing: content;"
                     ></textarea>
                     <button data-attr:disabled="$isWaitingResponse" type="submit" class="btn btn-primary btn-sm md:btn-md">
-                        Отправить
+                        Send
                     </button>
                 </form>
-                <div class="mt-1 text-xs opacity-60">Enter — отправить, Shift+Enter — новая строка.</div>
+                <div class="mt-1 text-xs opacity-60">Enter to send, Shift+Enter for a new line.</div>
             </div>
         </div>
     </div>

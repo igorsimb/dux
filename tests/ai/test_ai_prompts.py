@@ -1,11 +1,12 @@
 import importlib
+import re
 
 from ai import ai_prompts
 import ai.ai_utils.sql_tools as sql_tools
 
 
 def test_system_prompt_uses_source_matched_dialect_without_generic_schema_tools() -> None:
-    prompt = ai_prompts.SYSTEM_PROMPT_RU_SARCASTIC
+    prompt = ai_prompts.SYSTEM_PROMPT_SARCASTIC
 
     assert "exactly one source and its dialect" in prompt
     assert "fully qualified table names" in prompt
@@ -24,12 +25,12 @@ def test_ai_prompts_imports_with_mixed_allowlisted_dialects(monkeypatch) -> None
 
     reloaded = importlib.reload(ai_prompts)
 
-    assert "exactly one source and its dialect" in reloaded.SYSTEM_PROMPT_RU_SARCASTIC
+    assert "exactly one source and its dialect" in reloaded.SYSTEM_PROMPT_SARCASTIC
 
 
 def test_prompts_do_not_add_generic_brevity_instructions() -> None:
     prompts = [
-        ai_prompts.SYSTEM_PROMPT_RU_SARCASTIC,
+        ai_prompts.SYSTEM_PROMPT_SARCASTIC,
         ai_prompts.SYSTEM_PROMPT_SMALLTALK_META,
         ai_prompts.SYSTEM_PROMPT_THEME_CHANGE,
     ]
@@ -41,28 +42,41 @@ def test_prompts_do_not_add_generic_brevity_instructions() -> None:
         assert "be brief" not in lowered_prompt
 
 
+def test_prompts_do_not_force_a_response_language() -> None:
+    prompts = [
+        ai_prompts.SYSTEM_PROMPT_SARCASTIC,
+        ai_prompts.SYSTEM_PROMPT_SMALLTALK_META,
+        ai_prompts.SYSTEM_PROMPT_THEME_CHANGE,
+    ]
+
+    for prompt in prompts:
+        lowered_prompt = prompt.lower()
+        assert "reply in " not in lowered_prompt
+        assert "respond in " not in lowered_prompt
+        assert "same language" not in lowered_prompt
+        assert "user's language" not in lowered_prompt
+        assert re.search(r"[\u0400-\u04FF]", prompt) is None
+
+
 def test_smalltalk_and_theme_prompts_keep_their_product_scope() -> None:
-    assert "Reply in Russian" in ai_prompts.SYSTEM_PROMPT_SMALLTALK_META
     assert "SQL questions about sales" in ai_prompts.SYSTEM_PROMPT_SMALLTALK_META
     assert "Do not answer substantial unrelated topics" in ai_prompts.SYSTEM_PROMPT_SMALLTALK_META
-    assert "Reply in Russian" in ai_prompts.SYSTEM_PROMPT_THEME_CHANGE
     assert "theme-switching tool" in ai_prompts.SYSTEM_PROMPT_THEME_CHANGE
 
 
 def test_sql_prompt_preserves_clarification_and_business_defaults() -> None:
-    prompt = ai_prompts.SYSTEM_PROMPT_RU_SARCASTIC
+    prompt = ai_prompts.SYSTEM_PROMPT_SARCASTIC
 
     assert "call `ask_user`" in prompt
     assert "materially change the source, query, or result meaning" in prompt
     assert "reasonable business default" in prompt
     assert "recent" in prompt
-    assert "актуальные" in prompt
     assert "current calendar year" in prompt
-    assert "one neutral Russian question" in " ".join(prompt.split())
+    assert "one neutral question" in " ".join(prompt.split())
 
 
 def test_sql_prompt_preserves_guarded_execution_workflow() -> None:
-    prompt = ai_prompts.SYSTEM_PROMPT_RU_SARCASTIC
+    prompt = ai_prompts.SYSTEM_PROMPT_SARCASTIC
 
     assert "Call `get_table_descriptions`" in prompt
     assert "call `get_table_metadata` for every selected" in prompt
@@ -74,7 +88,7 @@ def test_sql_prompt_preserves_guarded_execution_workflow() -> None:
 
 
 def test_sql_prompt_preserves_domain_boundary() -> None:
-    prompt = ai_prompts.SYSTEM_PROMPT_RU_SARCASTIC
+    prompt = ai_prompts.SYSTEM_PROMPT_SARCASTIC
 
     assert "For substantial unrelated requests" in prompt
     assert "business data" in prompt
@@ -82,7 +96,7 @@ def test_sql_prompt_preserves_domain_boundary() -> None:
 
 
 def test_sql_prompt_delegates_final_layout_details_to_tool_schema() -> None:
-    prompt = ai_prompts.SYSTEM_PROMPT_RU_SARCASTIC
+    prompt = ai_prompts.SYSTEM_PROMPT_SARCASTIC
 
     assert "submit_model_response_layout(layout)" in prompt
     assert "exactly once" in prompt

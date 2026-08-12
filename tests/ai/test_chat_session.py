@@ -66,7 +66,7 @@ def test_ai_main_template_persists_chat_session_key_in_session_storage() -> None
         "if ($chatSessionKey) sessionStorage.setItem('chatSessionKey', $chatSessionKey);"
         in content
     )
-    assert "активной вкладки браузера" in content
+    assert "active browser tab" in content
 
 
 def test_ai_main_template_persists_transcript_and_usage_per_chat_session_key() -> None:
@@ -196,9 +196,22 @@ def test_ai_main_template_restores_data_table_details_and_sql_copy() -> None:
 
     assert "const getTableDetails = (block, renderedRowCount, rowCount) => {" in content
     assert "RESERVED_ANSWER_DETAIL_NOTE_LABELS" in content
+    assert 'new Set(["sql", "source", "rows shown", "tables"])' in content
+    assert "label.toLowerCase()" in content
+    assert "label.toLocaleLowerCase" not in content
     assert "const createDataTableDetailsBlock = (details) => {" in content
-    assert "Показать SQL" in content
+    assert 'summary.textContent = "Details";' in content
+    assert 'appendDetailRow(list, "Source:", details.sourceId)' in content
+    assert 'appendDetailRow(list, "Tables:", details.tables.join(", "))' in content
+    assert 'appendDetailRow(list, "Rows shown:",' in content
+    assert "Show SQL" in content
     assert "data-sql-copy-button" in content
+    assert 'default: "Copy table"' in content
+    assert 'success: "Table copied"' in content
+    assert 'error: "Could not copy table"' in content
+    assert 'default: "Copy SQL"' in content
+    assert 'success: "SQL copied"' in content
+    assert 'error: "Could not copy SQL"' in content
     assert "const copySqlToClipboard = async (button) => {" in content
     assert "copySqlToClipboard(sqlButton);" in content
     assert "code.textContent = details.rawSql;" in content
@@ -234,7 +247,7 @@ def test_ai_main_template_has_new_chat_reset_action() -> None:
     navbar_content = navbar_template_path.read_text(encoding="utf-8")
 
     assert "dispatchEvent(new CustomEvent('ai-new-chat-requested'" not in ai_content
-    assert "Новый чат" in navbar_content
+    assert "New chat" in navbar_content
     assert (
         "chatApp.dispatchEvent(new CustomEvent('ai-new-chat-requested', { bubbles: true }));"
         in navbar_content

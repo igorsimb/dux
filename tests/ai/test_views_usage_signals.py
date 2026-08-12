@@ -34,9 +34,9 @@ def _usage_event_payload(events: list[dict[str, object]]) -> dict[str, object]:
 
 
 def test_format_compact_tokens_formats_small_and_large_values() -> None:
-    assert token_usage.format_compact_tokens(999) == "999 ток"
-    assert token_usage.format_compact_tokens(1_800) == "1.8k ток"
-    assert token_usage.format_compact_tokens(12_000) == "12k ток"
+    assert token_usage.format_compact_tokens(999) == "999 tokens"
+    assert token_usage.format_compact_tokens(1_800) == "1.8k tokens"
+    assert token_usage.format_compact_tokens(12_000) == "12k tokens"
 
 
 def test_format_usage_breakdown_values() -> None:
@@ -88,7 +88,7 @@ def test_run_chat_keeps_session_token_counters_as_cumulative_frontend_metrics(
         views,
         "read_signals",
         lambda request: {
-            "userInput": "здарова",
+            "userInput": "hello",
             "chatSessionKey": "chat-tab-usage",
             "sessionInputTokens": "100",
             "sessionOutputTokens": "40",
@@ -158,7 +158,7 @@ def test_run_chat_keeps_session_token_counters_as_cumulative_frontend_metrics(
         "sessionHasCost": True,
         "sessionCostUsd": 0.75,
         "sessionCostUsdText": "0.7500",
-        "sessionTokenBadgeText": "180 ток",
+        "sessionTokenBadgeText": "180 tokens",
     }
 
 
@@ -207,7 +207,7 @@ def test_run_chat_updates_usage_signals_for_theme_change_turn(monkeypatch) -> No
         *, user_text, robot_id, thread_id, queue, stream_timeout_seconds
     ) -> None:
         await queue.put({"kind": "theme", "theme": "nord"})
-        await queue.put({"kind": "token", "text": "Готово."})
+        await queue.put({"kind": "token", "text": "Done."})
         await queue.put(
             {
                 "kind": "usage",
@@ -248,5 +248,5 @@ def test_run_chat_updates_usage_signals_for_theme_change_turn(monkeypatch) -> No
         "sessionHasCost": True,
         "sessionCostUsd": 0.0125,
         "sessionCostUsdText": "0.0125",
-        "sessionTokenBadgeText": "43 ток",
+        "sessionTokenBadgeText": "43 tokens",
     }

@@ -10,18 +10,18 @@ from ai.ai_utils.chat_errors import (
 @pytest.mark.parametrize(
     ("error", "expected_message"),
     [
-        (None, "\n\n(Ошибка: не удалось получить ответ. Попробуйте запрос еще раз.)"),
+        (None, "\n\n(Error: Could not get a response. Please try again.)"),
         (
             RuntimeError("provider unavailable"),
-            "\n\n(Ошибка: не удалось получить ответ. Попробуйте запрос еще раз.)",
+            "\n\n(Error: Could not get a response. Please try again.)",
         ),
         (
             RuntimeError("unsupported_country_region_territory"),
-            "\n\n(Ошибка: OpenAI недоступен из этого региона. Проверьте прокси.)",
+            "\n\n(Error: OpenAI is unavailable in this region. Check your proxy.)",
         ),
         (
             RuntimeError("Missing OPENAI_API_KEY"),
-            "\n\n(Ошибка: не задан OPENAI_API_KEY.)",
+            "\n\n(Error: OPENAI_API_KEY is not set.)",
         ),
     ],
 )
@@ -32,12 +32,12 @@ def test_build_error_message_returns_public_error_text(
 
 
 def test_build_timeout_message_returns_public_timeout_text() -> None:
-    assert build_timeout_message() == "\n\n(Ошибка: истекло время ожидания. Запрос отменен.)"
+    assert build_timeout_message() == "\n\n(Error: The request timed out and was canceled.)"
 
 
 def test_build_user_facing_message_appends_normalized_conversation_code() -> None:
-    assert build_user_facing_message("Ошибка.", "  ab12cd34  ") == "Ошибка. Код разговора: ab12cd34."
+    assert build_user_facing_message("Error.", "  ab12cd34  ") == "Error. Conversation code: ab12cd34."
 
 
 def test_build_user_facing_message_omits_blank_conversation_code() -> None:
-    assert build_user_facing_message("Ошибка.", "   ") == "Ошибка."
+    assert build_user_facing_message("Error.", "   ") == "Error."

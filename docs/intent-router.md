@@ -19,6 +19,9 @@ still needs one continuous conversation, one history, and one place to observe w
 
 That is why the app uses a single LangChain `create_agent(...)` agent with deterministic per-turn routing.
 
+The interface and application-owned messages are English-first. The deterministic router recognizes a focused set of
+English and Russian inputs for compatibility.
+
 ## Why this matters in this app
 
 This assistant is primarily a guarded SQL assistant. The SQL path is the important path: it has the business-focused
@@ -62,7 +65,18 @@ In practice, the precedence is:
 3. smalltalk or meta -> `smalltalk_meta`
 4. everything else -> `sql_agent`
 
-That means a mixed turn like `hi, show the top 10 customers by revenue` stays on the SQL path.
+That means a mixed turn like `hi, show the top 10 customers by revenue` stays on the SQL path. The same precedence
+applies to a recognized Russian turn such as `привет, покажи топ 10 клиентов по выручке`.
+
+## Recognized languages
+
+Routing recognizes selected English and Russian phrases or word stems. The compatibility is deliberately narrow and
+deterministic:
+
+- recognized English and Russian greetings and assistant-meta questions can select `smalltalk_meta`
+- recognized English and Russian theme requests can select `theme_change`
+- recognized business indicators in either language keep mixed or analytical requests on `sql_agent`
+- unknown text still uses the conservative `sql_agent` fallback
 
 ## What each mode does
 
@@ -75,6 +89,8 @@ Examples:
 - `hi`
 - `hello there`
 - `what can you do?`
+- `привет`
+- `что ты умеешь?`
 
 For this mode, middleware swaps in `SYSTEM_PROMPT_SMALLTALK_META` and exposes no tools.
 
@@ -90,6 +106,8 @@ Examples:
 - `switch the theme to nord`
 - `change the theme`
 - `make the theme lighter`
+- `смени тему на nord`
+- `поставь случайную тему`
 
 For this mode, middleware swaps in `SYSTEM_PROMPT_THEME_CHANGE` and exposes only one tool:
 
@@ -99,8 +117,7 @@ This matters because the model does not need access to the SQL tool set just to 
 
 When a theme change succeeds, the user sees two things:
 
-- a short acknowledgement message; this doc uses an English example like `Done — switched the theme to nord.`,
-  but the actual app still requires user-facing replies to be in Russian
+- a short model acknowledgement, such as `Done - switched the theme to nord.`
 - a UI theme signal that the frontend can apply immediately
 
 ### `sql_agent`
@@ -113,6 +130,7 @@ Examples:
 - `compare sales across product categories`
 - `stock levels for product 12345`
 - `hi, show the largest orders this month`
+- `покажи продажи по категориям`
 
 For this mode, middleware keeps the guarded SQL prompt and exposes only SQL workflow tools. The theme tool remains
 registered with the shared agent but is hidden from SQL model calls.
@@ -182,6 +200,7 @@ The intent router is intentionally simple:
 - one LangChain agent
 - deterministic routing code
 - per-turn middleware overrides
+- limited English/Russian input compatibility
 - conservative fallback to `sql_agent`
 - shared memory and history across everything
 

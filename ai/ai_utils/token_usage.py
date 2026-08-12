@@ -119,15 +119,15 @@ def format_compact_tokens(token_count: int) -> str:
 
     Example:
         >>> format_compact_tokens(1800)
-        '1.8k ток'
+        '1.8k tokens'
     """
     if token_count >= 1_000_000:
         value = token_count / 1_000_000
-        return f"{value:.0f}M ток" if token_count >= 10_000_000 else f"{value:.1f}M ток"
+        return f"{value:.0f}M tokens" if token_count >= 10_000_000 else f"{value:.1f}M tokens"
     if token_count >= 1_000:
         value = token_count / 1_000
-        return f"{value:.0f}k ток" if token_count >= 10_000 else f"{value:.1f}k ток"
-    return f"{token_count} ток"
+        return f"{value:.0f}k tokens" if token_count >= 10_000 else f"{value:.1f}k tokens"
+    return f"{token_count} tokens"
 
 
 def format_token_count(token_count: int) -> str:

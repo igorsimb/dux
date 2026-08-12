@@ -7,12 +7,13 @@ This file adds project-specific guidance on top of the global agent instructions
 This project's core is a guarded natural-language-to-SQL system for querying business data. It uses LangChain/LangGraph
 and OpenAI models to route each turn, inspect an allowlisted data catalog, generate and validate SQL, execute it against
 ClickHouse or Microsoft SQL Server, and return backend-owned structured results. A Python 3.13/Django 6 application
-with an authenticated Russian-language Datastar/SSE chat UI provides the delivery layer around that NL-to-SQL flow.
+with an authenticated English-first Datastar/SSE chat UI provides the delivery layer around that NL-to-SQL flow.
 
 - Treat `README.md` as the current behavior overview, but verify implementation details in code when they disagree.
 - The supported web entry point is `config.asgi:application`, normally run with Daphne. `manage.py` is the Django
   administrative entry point and configures application logging before Django starts.
-- The UI and assistant-facing copy are intentionally Russian. Developer documentation and code identifiers are English.
+- Application-owned UI and assistant-facing copy are English. Preserve the focused English/Russian input-routing
+  literals, tests, and `docs/intent-router.md` examples that verify deterministic bilingual intent recognition.
 
 ## Architecture Map
 

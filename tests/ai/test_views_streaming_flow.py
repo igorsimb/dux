@@ -39,7 +39,7 @@ def test_run_chat_derives_stable_thread_id_and_keeps_robot_id_separate(
     monkeypatch.setattr(
         views,
         "read_signals",
-        lambda request: {"userInput": "здарова", "chatSessionKey": "chat-tab-1234"},
+        lambda request: {"userInput": "hello", "chatSessionKey": "chat-tab-1234"},
     )
     monkeypatch.setattr(views, "DatastarResponse", lambda generator: generator)
     monkeypatch.setattr(
@@ -82,7 +82,7 @@ def test_run_chat_derives_stable_thread_id_and_keeps_robot_id_separate(
     events = asyncio.run(exercise())
 
     assert request.session.session_key is not None
-    assert captured["user_text"] == "здарова"
+    assert captured["user_text"] == "hello"
     assert captured["stream_timeout_seconds"] == 360
     assert captured["thread_id"] == build_thread_id(
         user_id=17,
@@ -95,7 +95,7 @@ def test_run_chat_derives_stable_thread_id_and_keeps_robot_id_separate(
         "payload": {
             "isWaitingResponse": True,
             "thinkingSeconds": 0,
-            "UserFacingProgressMessage": "думает...",
+            "UserFacingProgressMessage": "is thinking...",
             "chatSessionKey": "chat-tab-1234",
         },
     }
@@ -127,7 +127,7 @@ def test_run_chat_resolves_lazy_user_id_without_sync_only_error(monkeypatch) -> 
         views,
         "read_signals",
         lambda request: {
-            "userInput": "здарова",
+            "userInput": "hello",
             "chatSessionKey": "chat-tab-lazy-user",
         },
     )
@@ -178,7 +178,7 @@ def test_run_chat_normalizes_invalid_chat_session_key_and_returns_safe_value(
     monkeypatch.setattr(
         views,
         "read_signals",
-        lambda request: {"userInput": "здарова", "chatSessionKey": "   "},
+        lambda request: {"userInput": "hello", "chatSessionKey": "   "},
     )
     monkeypatch.setattr(views, "DatastarResponse", lambda generator: generator)
     monkeypatch.setattr(
@@ -226,7 +226,7 @@ def test_run_chat_normalizes_invalid_chat_session_key_and_returns_safe_value(
         "payload": {
             "isWaitingResponse": True,
             "thinkingSeconds": 0,
-            "UserFacingProgressMessage": "думает...",
+            "UserFacingProgressMessage": "is thinking...",
             "chatSessionKey": "chat-generated-safe",
         },
     }
@@ -240,7 +240,7 @@ def test_run_chat_same_client_key_still_isolates_thread_id_by_user_and_session(
     monkeypatch.setattr(
         views,
         "read_signals",
-        lambda request: {"userInput": "здарова", "chatSessionKey": "chat-shared-1234"},
+        lambda request: {"userInput": "hello", "chatSessionKey": "chat-shared-1234"},
     )
     monkeypatch.setattr(views, "DatastarResponse", lambda generator: generator)
     monkeypatch.setattr(
@@ -338,7 +338,7 @@ def test_run_chat_sets_waiting_response_true_in_initial_signal(monkeypatch) -> N
     monkeypatch.setattr(
         views,
         "read_signals",
-        lambda request: {"userInput": "здарова", "chatSessionKey": "chat-tab-5678"},
+        lambda request: {"userInput": "hello", "chatSessionKey": "chat-tab-5678"},
     )
     monkeypatch.setattr(views, "DatastarResponse", lambda generator: generator)
     monkeypatch.setattr(
@@ -376,7 +376,7 @@ def test_run_chat_sets_waiting_response_true_in_initial_signal(monkeypatch) -> N
         "payload": {
             "isWaitingResponse": True,
             "thinkingSeconds": 0,
-            "UserFacingProgressMessage": "думает...",
+            "UserFacingProgressMessage": "is thinking...",
             "chatSessionKey": "chat-tab-5678",
         },
     }
@@ -389,7 +389,7 @@ def test_run_chat_logs_final_visible_assistant_reply(monkeypatch) -> None:
     monkeypatch.setattr(
         views,
         "read_signals",
-        lambda request: {"userInput": "здарова", "chatSessionKey": "chat-tab-log-1234"},
+        lambda request: {"userInput": "hello", "chatSessionKey": "chat-tab-log-1234"},
     )
     monkeypatch.setattr(views, "DatastarResponse", lambda generator: generator)
     monkeypatch.setattr(
@@ -430,7 +430,7 @@ def test_run_chat_logs_final_visible_assistant_reply(monkeypatch) -> None:
     async def fake_session(
         *, user_text, robot_id, thread_id, queue, stream_timeout_seconds
     ) -> None:
-        await queue.put({"kind": "token", "text": "Здравствуйте"})
+        await queue.put({"kind": "token", "text": "Hello"})
         await queue.put(None)
 
     monkeypatch.setattr(views, "run_chat_session", fake_session)
@@ -454,8 +454,8 @@ def test_run_chat_logs_final_visible_assistant_reply(monkeypatch) -> None:
             session_key=str(request.session.session_key),
             client_key="chat-tab-log-1234",
         ),
-        "user_text": "здарова",
-        "ai_text": "Здравствуйте",
+        "user_text": "hello",
+        "ai_text": "Hello",
     }
 
 
@@ -467,7 +467,7 @@ def test_run_chat_renders_structured_blocks_and_logs_visible_summary(monkeypatch
     monkeypatch.setattr(
         views,
         "read_signals",
-        lambda request: {"userInput": "топ клиентов", "chatSessionKey": "chat-tab-blocks"},
+        lambda request: {"userInput": "top customers", "chatSessionKey": "chat-tab-blocks"},
     )
     monkeypatch.setattr(views, "DatastarResponse", lambda generator: generator)
     monkeypatch.setattr(views, "append_user_message", lambda text: {"kind": "user", "text": text})
@@ -500,11 +500,11 @@ def test_run_chat_renders_structured_blocks_and_logs_visible_summary(monkeypatch
     )
 
     blocks = [
-        {"id": "c1", "type": "commentary", "format": "markdown", "content": "Вот результат."},
+        {"id": "c1", "type": "commentary", "format": "markdown", "content": "Here is the result."},
         {
             "id": "sql-result-1",
             "type": "data_table",
-            "title": "Топ клиентов",
+            "title": "Top customers",
             "columns": [],
             "rows": [],
             "meta": {"row_count": 10, "rendered_row_count": 5, "truncated": True},
@@ -534,8 +534,8 @@ def test_run_chat_renders_structured_blocks_and_logs_visible_summary(monkeypatch
         "permissions": {"can_view_answer_notes": True, "can_view_raw_sql": False},
     } in events
     assert captured["ai_text"] == (
-        "Вот результат.\n\n"
-        "[Таблица: Топ клиентов, строк показано: 5 из 10]"
+        "Here is the result.\n\n"
+        "[Table: Top customers, rows shown: 5 of 10]"
     )
 
 
@@ -615,7 +615,7 @@ def test_run_chat_timeout_emits_timeout_message_once_and_resets_waiting_state(
     monkeypatch.setattr(
         views,
         "read_signals",
-        lambda request: {"userInput": "здарова", "chatSessionKey": "chat-tab-9012"},
+        lambda request: {"userInput": "hello", "chatSessionKey": "chat-tab-9012"},
     )
     monkeypatch.setattr(views, "DatastarResponse", lambda generator: generator)
     monkeypatch.setattr(
@@ -706,7 +706,7 @@ def test_run_chat_timeout_message_includes_public_conversation_code(
         views,
         "read_signals",
         lambda request: {
-            "userInput": "здарова",
+            "userInput": "hello",
             "chatSessionKey": "chat-tab-timeout-code",
         },
     )
@@ -802,7 +802,7 @@ def test_run_chat_logs_thread_id_when_cleanup_task_fails(monkeypatch) -> None:
         views,
         "read_signals",
         lambda request: {
-            "userInput": "здарова",
+            "userInput": "hello",
             "chatSessionKey": "chat-tab-cleanup-log",
         },
     )
@@ -839,7 +839,7 @@ def test_run_chat_logs_thread_id_when_cleanup_task_fails(monkeypatch) -> None:
     async def fake_session(
         *, user_text, robot_id, thread_id, queue, stream_timeout_seconds
     ) -> None:
-        await queue.put({"kind": "token", "text": "Здравствуйте"})
+        await queue.put({"kind": "token", "text": "Hello"})
         await queue.put(None)
 
     async def failing_finalize(_producer_task) -> None:
@@ -878,7 +878,7 @@ def test_run_chat_logs_timeout_text_when_that_is_final_visible_reply(
         views,
         "read_signals",
         lambda request: {
-            "userInput": "здарова",
+            "userInput": "hello",
             "chatSessionKey": "chat-tab-timeout-log",
         },
     )
@@ -957,7 +957,7 @@ def test_run_chat_logs_timeout_text_when_that_is_final_visible_reply(
             session_key="django-session-timeout",
             client_key="chat-tab-timeout-log",
         ),
-        "user_text": "здарова",
+        "user_text": "hello",
         "ai_text": "TIMEOUT",
     }
 
@@ -1055,5 +1055,5 @@ def test_ai_main_template_help_text_matches_short_term_memory_model() -> None:
     ).read_text(encoding="utf-8")
 
     assert (
-        "Робот помнит текущий разговор в рамках активной вкладки браузера." in content
+        "Dux remembers the current conversation within the active browser tab." in content
     )

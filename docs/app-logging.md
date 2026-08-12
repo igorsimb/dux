@@ -206,8 +206,8 @@ The file content starts with a stable conversation header:
 Conversation: 5f2ab1c0f4d2
 
 [2026-03-30 15:12:41]
-User: Привет
-AI: Здравствуйте
+User: Hello
+AI: Hi! How can I help?
 ```
 
 The header is written once when the file is created. Later turns append normally.
@@ -217,7 +217,7 @@ The header is written once when the file is created. Later turns append normally
 User-visible timeout and error messages can include a shorter support code such as:
 
 ```text
-(Ошибка: не удалось получить ответ. Попробуйте запрос еще раз.) Код разговора: 5f2ab1c0f4d2.
+(Error: Could not get a response. Please try again.) Conversation code: 5f2ab1c0f4d2.
 ```
 
 That text is built separately from the base persisted transcript/log text.

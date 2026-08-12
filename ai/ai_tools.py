@@ -91,7 +91,7 @@ def _get_explicit_query_row_limit(query: str, dialect: str | None) -> int | None
 
 @tool
 def ask_user(question: str) -> str:
-    """Ask one Russian question when missing information would materially change the SQL or result."""
+    """Ask one question when missing information would materially change the SQL or result."""
     return question
 
 
@@ -139,8 +139,7 @@ def submit_model_response_layout(
 ) -> Command | dict[str, object]:
     """Submit the final layout after SQL execution.
 
-    Include Russian commentary and one `data_table_placeholder` per result. Never include SQL rows; the backend
-    inserts them.
+    Include commentary and one `data_table_placeholder` per result. Never include SQL rows; the backend inserts them.
     """
 
     logger.debug(

@@ -6,6 +6,7 @@ INTENT_SMALLTALK_META = "smalltalk_meta"
 INTENT_THEME_CHANGE = "theme_change"
 INTENT_SQL_AGENT = "sql_agent"
 
+# The Cyrillic literals below intentionally preserve limited English/Russian input routing.
 _SMALLTALK_PHRASES = {
     "hi",
     "sup",
@@ -98,7 +99,7 @@ def _normalize_message(message: str) -> str:
 def _has_business_indicator(message: str) -> bool:
     """Return True when the turn looks like a data request.
 
-    The explicit follow-up pattern catches short context-dependent turns such as:
+    The explicit Russian follow-up pattern catches short context-dependent turns such as:
     - "а по клиентам?"
     - "по заказам"
 
@@ -114,7 +115,7 @@ def _is_theme_change_request(message: str) -> bool:
     """Return True when the turn asks to change the UI theme.
 
     The regex branches cover phrasing that is hard to represent as fixed phrases:
-    - "смени пожалуйста тему" allows one polite/filler word between action and "тему"
+    - "смени пожалуйста тему" allows one Russian polite/filler word between the action and theme noun
     - "switch the theme to nord" and "change the theme" match documented English examples
     - "make the theme lighter" and "make the theme darker" match English brightness requests
     """

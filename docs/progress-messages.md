@@ -16,7 +16,7 @@ The path from a tool stage to the waiting alert is short:
 
 ```text
 SQL/tool stage
--> ai/ai_utils/progress_messages.py picks a Russian phrase
+-> ai/ai_utils/progress_messages.py picks an English phrase
 -> show_progress_message(...) writes it with LangGraph get_stream_writer()
 -> LangGraph emits it on the custom stream
 -> ai/ai_utils/streaming.py turns custom text into {kind: "progress", text: ...}
@@ -27,11 +27,12 @@ SQL/tool stage
 The visible alert is the row under the chat transcript while `isWaitingResponse` is true:
 
 ```text
-Dux <UserFacingProgressMessage> <thinkingSeconds> сек.
+Dux <UserFacingProgressMessage> <thinkingSeconds> sec.
 ```
 
-The default signal value is `думает...`. A real SQL turn may replace it with phrases like `проверяет SQL-запрос`,
-`ждет ответ от базы`, or `готовит финальный ответ`, depending on which tool stage emitted the latest custom event.
+The default signal value is `is thinking...`. A real SQL turn may replace it with phrases like
+`is checking the SQL query`, `is waiting for the database response`, or `is preparing the final answer`, depending on
+which tool stage emitted the latest custom event.
 
 ## What stages exist
 
@@ -43,13 +44,13 @@ The implementation groups messages around the practical steps a user is waiting 
 - validated SQL execution, including token problems, DB connection/configuration issues, waiting for the database,
   database errors, and final result analysis
 
-Each stage has a set of short Russian phrases. The helper chooses one at random at runtime, so repeated turns do not
+Each stage has a set of short English phrases. The helper chooses one at random at runtime, so repeated turns do not
 show the exact same wording every time.
 
-## Why the phrases are randomized and Russian
+## Why the phrases are randomized
 
-The chat UI is Russian, so these progress hints are Russian too. They are written as small human-readable fragments that
-fit after `Dux` in the waiting alert.
+The phrases are written as present-continuous fragments that fit after `Dux` in the waiting alert. This keeps every
+stage grammatically consistent, such as `Dux is checking available tables`.
 
 Randomization is deliberately lightweight. It does not change control flow or stage semantics; it only avoids making
 long-running turns feel mechanical when the same stage happens often, such as SQL validation retries or DB waiting.

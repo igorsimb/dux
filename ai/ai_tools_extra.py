@@ -49,6 +49,7 @@ _RANDOM_THEME_HINTS = {
     "switch color scheme",
     "random",
     "random theme",
+    # Russian aliases intentionally preserve the existing bilingual input contract.
     "смени тему",
     "переключи тему",
     "смени цветовую тему",

@@ -34,6 +34,37 @@ def test_switch_color_theme_picks_random_theme_when_input_is_empty(
     assert emitted_events == [{"kind": "theme", "theme": "cupcake"}]
 
 
+@pytest.mark.parametrize(
+    "theme",
+    [
+        "switch theme",
+        "switch color theme",
+        "switch color scheme",
+        "random",
+        "random theme",
+        "смени тему",
+        "переключи тему",
+        "смени цветовую тему",
+        "смени цветовую схему",
+        "поставь рандомую тему",
+        "поставь случайную тему",
+        "поставь случайную цветовую тему",
+        "поставь случайную цветовую схему",
+    ],
+)
+def test_switch_color_theme_recognizes_english_and_russian_random_aliases(
+    monkeypatch,
+    emitted_events: list[object],
+    theme: str,
+) -> None:
+    monkeypatch.setattr(ai_tools_extra.random, "choice", lambda _themes: "nord")
+
+    result = _call_switch_color_theme(theme)
+
+    assert json.loads(result) == {"status": "ok", "theme": "nord", "source": "random"}
+    assert emitted_events == [{"kind": "theme", "theme": "nord"}]
+
+
 def test_switch_color_theme_resolves_theme_by_1_based_index(
     emitted_events: list[object],
 ) -> None:

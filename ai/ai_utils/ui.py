@@ -13,7 +13,7 @@ from django.utils.html import escape
 
 CHAT_MESSAGES_SELECTOR = "#chat-messages"
 ROBOT_ID_PREFIX = "robot-"
-RESERVED_ANSWER_DETAIL_NOTE_LABELS = {"sql", "источник", "строк показано", "таблицы"}
+RESERVED_ANSWER_DETAIL_NOTE_LABELS = {"sql", "source", "rows shown", "tables"}
 
 
 def format_chat_html(text: str) -> str:
@@ -244,12 +244,12 @@ def build_blocks_visible_text(blocks: list[dict]) -> str:
             if content:
                 parts.append(content)
         elif block.get("type") == "data_table":
-            title = str(block.get("title") or "Результаты запроса")
+            title = str(block.get("title") or "Query results")
             meta = block.get("meta") if isinstance(block.get("meta"), dict) else {}
             rendered_row_count = int(meta.get("rendered_row_count") or 0)
             row_count = int(meta.get("row_count") or rendered_row_count)
             parts.append(
-                f"[Таблица: {title}, строк показано: {rendered_row_count} из {row_count}]"
+                f"[Table: {title}, rows shown: {rendered_row_count} of {row_count}]"
             )
     return "\n\n".join(parts)
 

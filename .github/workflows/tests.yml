@@ -14,13 +14,15 @@ jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      DJANGO_SECRET_KEY: django-insecure-ci-test-key-not-for-production
 
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v9
+        uses: astral-sh/setup-uv@v9.0.0
         with:
           python-version-file: .python-version
           enable-cache: true
