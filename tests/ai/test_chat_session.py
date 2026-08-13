@@ -314,7 +314,7 @@ def test_base_template_shows_current_ui_version() -> None:
     )
     content = template_path.read_text(encoding="utf-8")
 
-    assert "v0.9.35" in content
+    assert "v0.9.36" in content
 
 
 def test_navbar_template_uses_narrower_sidebar_widths() -> None:

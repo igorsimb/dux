@@ -1,11 +1,13 @@
 # Dux
 
-Dux is a guarded natural-language-to-SQL application for querying business data. It combines a Django chat interface
+Dux is a slightly sarcastic guarded natural-language-to-SQL application for querying business data. It combines a 
+Django chat interface
 with LangChain and LangGraph to inspect an allowlisted catalog, generate SQL, validate it deterministically, execute it
-against ClickHouse or Microsoft SQL Server, and render backend-owned structured results.
+against SQLite, ClickHouse, or Microsoft SQL Server, and render backend-owned structured results.
 
-The checked-in data catalog is intentionally empty. Each deployment must configure its own sources, allowlisted tables,
-and model-facing metadata.
+The public repository includes the Chinook sample music-store database and a complete checked-in catalog, so a fresh
+clone can demonstrate the guarded query flow without an external database. Deployments can replace or extend the
+example with their own sources, allowlisted tables, and model-facing metadata.
 
 ## Why the SQL flow is guarded
 
@@ -22,7 +24,7 @@ cross-source, or outside the allowlist are rejected before execution.
 
 - Authenticated English-first chat UI built with Django, Datastar, and SSE
 - One LangGraph conversation with deterministic English/Russian routing for SQL, small talk, and theme changes
-- ClickHouse and Microsoft SQL Server source support
+- SQLite, ClickHouse, and Microsoft SQL Server source support
 - Deterministic read-only SQL validation with `sqlglot`
 - Per-source table allowlists and detailed metadata
 - Backend-owned result rows and structured UI blocks
@@ -46,17 +48,18 @@ cross-source, or outside the allowlist are rejected before execution.
 
 ## Configure data sources
 
-Sources are declared in `core/db_config/sql_sources.json`. The public configuration includes neutral ClickHouse and
-MSSQL source definitions whose connection values are resolved from environment variables.
+Sources are declared in `core/db_config/sql_sources.json`. The public configuration includes the bundled SQLite
+`chinook` example plus neutral ClickHouse and MSSQL source definitions whose connection values are resolved from
+environment variables.
 
 The catalog is split across two files:
 
 - `ai/table_descriptions.json` lists model-visible allowlisted tables and their source and dialect.
 - `ai/table_metadata.json` describes columns, query constraints, and safe example queries for each allowlisted table.
 
-Both files contain empty `tables` collections by default. See `docs/how_to_add_table.md` and
-`docs/table_metadata_reference.md` before adding deployment-specific catalog entries. Treat catalog changes as security
-changes because they determine what SQL the model can validate and execute.
+Both files contain the 11-table Chinook catalog by default. See `docs/how_to_add_table.md` and
+`docs/table_metadata_reference.md` before replacing or adding deployment-specific catalog entries. Treat catalog
+changes as security changes because they determine what SQL the model can validate and execute.
 
 ## Run locally
 
@@ -64,7 +67,7 @@ Requirements:
 
 - Python 3.13
 - ODBC Driver 18 for SQL Server when using MSSQL
-- Access to any configured external data source
+- Access to any additional configured external data source
 
 Install dependencies and apply Django migrations:
 
@@ -94,6 +97,7 @@ Application and model settings:
 - `OPENAI_API_KEY`: required for model calls
 - `OPENAI_MODEL`: optional model selection
 - `OPENAI_PROXY`: optional proxy URL
+- `CHINOOK_DATABASE_PATH`: optional Chinook data-source path; defaults to repository-root `Chinook.db`
 
 Default ClickHouse source:
 

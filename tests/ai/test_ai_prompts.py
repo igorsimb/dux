@@ -9,7 +9,7 @@ def test_system_prompt_uses_source_matched_dialect_without_generic_schema_tools(
     prompt = ai_prompts.SYSTEM_PROMPT_SARCASTIC
 
     assert "exactly one source and its dialect" in prompt
-    assert "fully qualified table names" in prompt
+    assert "exact canonical table names" in prompt
     assert "sql_db_list_tables" not in prompt
     assert "sql_db_schema" not in prompt
 
@@ -59,7 +59,9 @@ def test_prompts_do_not_force_a_response_language() -> None:
 
 
 def test_smalltalk_and_theme_prompts_keep_their_product_scope() -> None:
-    assert "SQL questions about sales" in ai_prompts.SYSTEM_PROMPT_SMALLTALK_META
+    assert "configured table catalog" in ai_prompts.SYSTEM_PROMPT_SMALLTALK_META
+    assert "bundled Chinook example" in ai_prompts.SYSTEM_PROMPT_SMALLTALK_META
+    assert "artists, albums, tracks" in ai_prompts.SYSTEM_PROMPT_SMALLTALK_META
     assert "Do not answer substantial unrelated topics" in ai_prompts.SYSTEM_PROMPT_SMALLTALK_META
     assert "theme-switching tool" in ai_prompts.SYSTEM_PROMPT_THEME_CHANGE
 
@@ -72,6 +74,8 @@ def test_sql_prompt_preserves_clarification_and_business_defaults() -> None:
     assert "reasonable business default" in prompt
     assert "recent" in prompt
     assert "current calendar year" in prompt
+    assert "source-specific time semantics" in prompt
+    assert "dataset-relative calendar" in prompt
     assert "one neutral question" in " ".join(prompt.split())
 
 
@@ -93,6 +97,8 @@ def test_sql_prompt_preserves_domain_boundary() -> None:
     assert "For substantial unrelated requests" in prompt
     assert "business data" in prompt
     assert "Greetings and assistant-meta questions are allowed" in prompt
+    assert "available in the configured table catalog" in prompt
+    assert "Chinook" not in prompt
 
 
 def test_sql_prompt_delegates_final_layout_details_to_tool_schema() -> None:

@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-08-13 (`v0.9.36`)
+
+- Added SQLite as a query-source connector while preserving the existing ClickHouse and Microsoft SQL Server support.
+- Bundled the public Chinook sample database with a complete 11-table catalog for immediate local exploration.
+- Updated assistant guidance and help examples for music sales, customers, artists, albums, tracks, genres, employees,
+  and playlists.
+
 ## 2026-07-06 (`v0.9.35`)
 
 - SQL result tables now include a permission-gated `Details` panel with source, table, row-count, model-note, and

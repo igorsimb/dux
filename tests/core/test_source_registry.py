@@ -36,17 +36,27 @@ def test_load_sql_sources_parses_valid_config(tmp_path: Path) -> None:
                         "database": "MSSQL_DATABASE",
                     },
                 },
+                {
+                    "id": "chinook",
+                    "dialect": "sqlite",
+                    "driver": "sqlite",
+                    "env": {"path": "CHINOOK_DATABASE_PATH"},
+                    "default_database": "Chinook.db",
+                },
             ]
         },
     )
 
     sources = source_registry.load_sql_sources(config_path)
 
-    assert len(sources) == 2
+    assert len(sources) == 3
     assert sources[0].id == "clickhouse_default"
     assert sources[0].dialect is SQLDialect.CLICKHOUSE
     assert sources[1].id == "mssql_default"
     assert sources[1].dialect is SQLDialect.MSSQL
+    assert sources[2].id == "chinook"
+    assert sources[2].dialect is SQLDialect.SQLITE
+    assert sources[2].default_database == "Chinook.db"
 
 
 def test_load_sql_sources_requires_sources_key(tmp_path: Path) -> None:

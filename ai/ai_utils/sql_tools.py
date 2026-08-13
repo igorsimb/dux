@@ -161,9 +161,9 @@ def load_allowed_tables_for_source(source_id: str) -> set[str]:
 def build_short_name_index(allowed_full_tables: set[str]) -> dict[str, list[str]]:
     index: dict[str, list[str]] = {}
     for full_name in sorted(allowed_full_tables):
-        if "." not in full_name:
-            continue
-        _, short_name = full_name.split(".", 1)
+        _, separator, short_name = full_name.partition(".")
+        if not separator:
+            short_name = full_name
         index.setdefault(short_name, []).append(full_name)
     return index
 

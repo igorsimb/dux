@@ -1,3 +1,367 @@
 {
-  "tables": {}
+  "tables": {
+    "Album": {
+      "table": "Album",
+      "description": "Albums in the Chinook music catalog. Join to Artist for the performer and to Track for the album's tracks.",
+      "grain": "One row per album.",
+      "column_types": {
+        "AlbumId": "INTEGER NOT NULL PRIMARY KEY",
+        "Title": "NVARCHAR(160) NOT NULL",
+        "ArtistId": "INTEGER NOT NULL"
+      },
+      "relationships": [
+        "Album.ArtistId = Artist.ArtistId",
+        "Album.AlbumId = Track.AlbumId"
+      ],
+      "important_columns": {
+        "AlbumId": "Album identifier",
+        "Title": "Album title",
+        "ArtistId": "Artist identifier"
+      },
+      "query_hints": [
+        "Join Artist on ArtistId when an artist name is needed.",
+        "Join Track on AlbumId to count tracks or connect albums to invoice lines."
+      ],
+      "row_count_estimate": 347,
+      "requires_date_filter": false,
+      "sample_queries": [
+        "SELECT ar.Name AS Artist, COUNT(*) AS AlbumCount FROM Album AS al JOIN Artist AS ar ON ar.ArtistId = al.ArtistId GROUP BY ar.ArtistId, ar.Name ORDER BY AlbumCount DESC LIMIT 10"
+      ]
+    },
+    "Artist": {
+      "table": "Artist",
+      "description": "Artists represented in the Chinook music catalog.",
+      "grain": "One row per artist.",
+      "column_types": {
+        "ArtistId": "INTEGER NOT NULL PRIMARY KEY",
+        "Name": "NVARCHAR(120) NULL"
+      },
+      "relationships": [
+        "Artist.ArtistId = Album.ArtistId"
+      ],
+      "important_columns": {
+        "ArtistId": "Artist identifier",
+        "Name": "Artist or group name; may be null"
+      },
+      "query_hints": [
+        "Join through Album and Track to connect artists to tracks or sales.",
+        "Use LEFT JOIN when retaining artists that have no matching albums or sales matters."
+      ],
+      "row_count_estimate": 275,
+      "requires_date_filter": false,
+      "sample_queries": [
+        "SELECT ArtistId, Name FROM Artist ORDER BY Name LIMIT 50"
+      ]
+    },
+    "Customer": {
+      "table": "Customer",
+      "description": "Fictional Chinook store customers with contact, company, address, geography, and assigned support representative data.",
+      "grain": "One row per customer.",
+      "column_types": {
+        "CustomerId": "INTEGER NOT NULL PRIMARY KEY",
+        "FirstName": "NVARCHAR(40) NOT NULL",
+        "LastName": "NVARCHAR(20) NOT NULL",
+        "Company": "NVARCHAR(80) NULL",
+        "Address": "NVARCHAR(70) NULL",
+        "City": "NVARCHAR(40) NULL",
+        "State": "NVARCHAR(40) NULL",
+        "Country": "NVARCHAR(40) NULL",
+        "PostalCode": "NVARCHAR(10) NULL",
+        "Phone": "NVARCHAR(24) NULL",
+        "Fax": "NVARCHAR(24) NULL",
+        "Email": "NVARCHAR(60) NOT NULL",
+        "SupportRepId": "INTEGER NULL"
+      },
+      "relationships": [
+        "Customer.SupportRepId = Employee.EmployeeId",
+        "Customer.CustomerId = Invoice.CustomerId"
+      ],
+      "important_columns": {
+        "CustomerId": "Customer identifier",
+        "FirstName": "Customer first name",
+        "LastName": "Customer last name",
+        "Company": "Customer company when present",
+        "City": "Customer city",
+        "State": "Customer state or region",
+        "Country": "Customer country",
+        "Email": "Customer email address",
+        "SupportRepId": "Assigned employee identifier"
+      },
+      "query_hints": [
+        "Join Invoice on CustomerId for customer purchasing and revenue analysis.",
+        "Join Employee on SupportRepId to analyze support representative portfolios.",
+        "Customer geography describes the customer; Invoice billing fields describe a specific sale."
+      ],
+      "row_count_estimate": 59,
+      "requires_date_filter": false,
+      "sample_queries": [
+        "SELECT Country, COUNT(*) AS CustomerCount FROM Customer GROUP BY Country ORDER BY CustomerCount DESC, Country"
+      ]
+    },
+    "Employee": {
+      "table": "Employee",
+      "description": "Fictional Chinook employees, including customer support representatives and a self-referencing reporting hierarchy.",
+      "grain": "One row per employee.",
+      "column_types": {
+        "EmployeeId": "INTEGER NOT NULL PRIMARY KEY",
+        "LastName": "NVARCHAR(20) NOT NULL",
+        "FirstName": "NVARCHAR(20) NOT NULL",
+        "Title": "NVARCHAR(30) NULL",
+        "ReportsTo": "INTEGER NULL",
+        "BirthDate": "DATETIME NULL",
+        "HireDate": "DATETIME NULL",
+        "Address": "NVARCHAR(70) NULL",
+        "City": "NVARCHAR(40) NULL",
+        "State": "NVARCHAR(40) NULL",
+        "Country": "NVARCHAR(40) NULL",
+        "PostalCode": "NVARCHAR(10) NULL",
+        "Phone": "NVARCHAR(24) NULL",
+        "Fax": "NVARCHAR(24) NULL",
+        "Email": "NVARCHAR(60) NULL"
+      },
+      "relationships": [
+        "Employee.ReportsTo = manager.EmployeeId",
+        "Employee.EmployeeId = Customer.SupportRepId"
+      ],
+      "important_columns": {
+        "EmployeeId": "Employee identifier",
+        "FirstName": "Employee first name",
+        "LastName": "Employee last name",
+        "Title": "Job title",
+        "ReportsTo": "Manager's employee identifier",
+        "HireDate": "Employment start date"
+      },
+      "query_hints": [
+        "Use a self-join with distinct aliases to show an employee and manager.",
+        "Join Customer on SupportRepId, then Invoice on CustomerId, for support representative sales analysis."
+      ],
+      "row_count_estimate": 8,
+      "requires_date_filter": false,
+      "sample_queries": [
+        "SELECT e.FirstName || ' ' || e.LastName AS Employee, e.Title, m.FirstName || ' ' || m.LastName AS Manager FROM Employee AS e LEFT JOIN Employee AS m ON m.EmployeeId = e.ReportsTo ORDER BY e.EmployeeId"
+      ]
+    },
+    "Genre": {
+      "table": "Genre",
+      "description": "Lookup of genres used to classify tracks in the Chinook catalog.",
+      "grain": "One row per genre.",
+      "column_types": {
+        "GenreId": "INTEGER NOT NULL PRIMARY KEY",
+        "Name": "NVARCHAR(120) NULL"
+      },
+      "relationships": [
+        "Genre.GenreId = Track.GenreId"
+      ],
+      "important_columns": {
+        "GenreId": "Genre identifier",
+        "Name": "Genre name; may be null"
+      },
+      "query_hints": [
+        "Join Track on GenreId, then InvoiceLine on TrackId, to analyze genre sales.",
+        "Use LEFT JOIN when genres with no tracks or sales must remain visible."
+      ],
+      "row_count_estimate": 25,
+      "requires_date_filter": false,
+      "sample_queries": [
+        "SELECT g.Name AS Genre, COUNT(t.TrackId) AS TrackCount FROM Genre AS g LEFT JOIN Track AS t ON t.GenreId = g.GenreId GROUP BY g.GenreId, g.Name ORDER BY TrackCount DESC"
+      ]
+    },
+    "Invoice": {
+      "table": "Invoice",
+      "description": "Chinook sales invoice headers. The fixed sample covers 2009-01-01 through 2013-12-22 and stores invoice-level totals and billing geography.",
+      "data_window": "2009-01-01 through 2013-12-22; the latest represented sales year is 2013.",
+      "grain": "One row per invoice.",
+      "column_types": {
+        "InvoiceId": "INTEGER NOT NULL PRIMARY KEY",
+        "CustomerId": "INTEGER NOT NULL",
+        "InvoiceDate": "DATETIME NOT NULL",
+        "BillingAddress": "NVARCHAR(70) NULL",
+        "BillingCity": "NVARCHAR(40) NULL",
+        "BillingState": "NVARCHAR(40) NULL",
+        "BillingCountry": "NVARCHAR(40) NULL",
+        "BillingPostalCode": "NVARCHAR(10) NULL",
+        "Total": "NUMERIC(10,2) NOT NULL"
+      },
+      "relationships": [
+        "Invoice.CustomerId = Customer.CustomerId",
+        "Invoice.InvoiceId = InvoiceLine.InvoiceId"
+      ],
+      "important_columns": {
+        "InvoiceId": "Invoice identifier",
+        "CustomerId": "Purchasing customer identifier",
+        "InvoiceDate": "Invoice timestamp",
+        "BillingCity": "Billing city for this invoice",
+        "BillingState": "Billing state or region for this invoice",
+        "BillingCountry": "Billing country for this invoice",
+        "Total": "Invoice-level total value"
+      },
+      "query_hints": [
+        "Use SUM(Invoice.Total) for invoice-level revenue when no line-item attributes are needed.",
+        "Do not sum Invoice.Total after joining InvoiceLine unless invoices are deduplicated first; the join repeats the header for every line.",
+        "For line, track, album, artist, or genre analysis, use SUM(InvoiceLine.UnitPrice * InvoiceLine.Quantity) as realized revenue.",
+        "For dataset-relative phrases such as 'latest year' or 'last year' without an explicit date, anchor the period to the latest represented InvoiceDate, 2013-12-22. State this assumption in the answer.",
+        "Treat explicit years and dates literally. A user-specified year outside 2009-2013 may correctly return no rows.",
+        "SQLite can group by year with strftime('%Y', InvoiceDate)."
+      ],
+      "row_count_estimate": 412,
+      "requires_date_filter": false,
+      "sample_queries": [
+        "SELECT BillingCountry, ROUND(SUM(Total), 2) AS Revenue FROM Invoice GROUP BY BillingCountry ORDER BY Revenue DESC LIMIT 10",
+        "SELECT strftime('%Y', InvoiceDate) AS SalesYear, ROUND(SUM(Total), 2) AS Revenue FROM Invoice GROUP BY SalesYear ORDER BY SalesYear"
+      ]
+    },
+    "InvoiceLine": {
+      "table": "InvoiceLine",
+      "description": "Line items on Chinook invoices, recording the sold track, realized unit price, and quantity.",
+      "grain": "One row per track line on an invoice.",
+      "column_types": {
+        "InvoiceLineId": "INTEGER NOT NULL PRIMARY KEY",
+        "InvoiceId": "INTEGER NOT NULL",
+        "TrackId": "INTEGER NOT NULL",
+        "UnitPrice": "NUMERIC(10,2) NOT NULL",
+        "Quantity": "INTEGER NOT NULL"
+      },
+      "relationships": [
+        "InvoiceLine.InvoiceId = Invoice.InvoiceId",
+        "InvoiceLine.TrackId = Track.TrackId"
+      ],
+      "important_columns": {
+        "InvoiceLineId": "Invoice-line identifier",
+        "InvoiceId": "Parent invoice identifier",
+        "TrackId": "Sold track identifier",
+        "UnitPrice": "Realized unit price on this sale",
+        "Quantity": "Units sold on this line"
+      },
+      "query_hints": [
+        "Calculate line revenue as UnitPrice * Quantity and aggregate that expression for track, album, artist, genre, or media-type revenue.",
+        "Use SUM(Quantity) for units sold and COUNT(DISTINCT InvoiceId) for invoice count.",
+        "Join Invoice for dates, customers, and billing geography; join Track for catalog attributes."
+      ],
+      "row_count_estimate": 2240,
+      "requires_date_filter": false,
+      "sample_queries": [
+        "SELECT TrackId, SUM(Quantity) AS UnitsSold, ROUND(SUM(UnitPrice * Quantity), 2) AS Revenue FROM InvoiceLine GROUP BY TrackId ORDER BY Revenue DESC LIMIT 10"
+      ]
+    },
+    "MediaType": {
+      "table": "MediaType",
+      "description": "Lookup of media formats used by tracks, such as MPEG audio, AAC audio, and protected video.",
+      "grain": "One row per media type.",
+      "column_types": {
+        "MediaTypeId": "INTEGER NOT NULL PRIMARY KEY",
+        "Name": "NVARCHAR(120) NULL"
+      },
+      "relationships": [
+        "MediaType.MediaTypeId = Track.MediaTypeId"
+      ],
+      "important_columns": {
+        "MediaTypeId": "Media-type identifier",
+        "Name": "Media-format name; may be null"
+      },
+      "query_hints": [
+        "Join Track on MediaTypeId for catalog counts, then InvoiceLine on TrackId for sales analysis."
+      ],
+      "row_count_estimate": 5,
+      "requires_date_filter": false,
+      "sample_queries": [
+        "SELECT mt.Name AS MediaType, COUNT(t.TrackId) AS TrackCount FROM MediaType AS mt LEFT JOIN Track AS t ON t.MediaTypeId = mt.MediaTypeId GROUP BY mt.MediaTypeId, mt.Name ORDER BY TrackCount DESC"
+      ]
+    },
+    "Playlist": {
+      "table": "Playlist",
+      "description": "Named playlists in the Chinook catalog.",
+      "grain": "One row per playlist.",
+      "column_types": {
+        "PlaylistId": "INTEGER NOT NULL PRIMARY KEY",
+        "Name": "NVARCHAR(120) NULL"
+      },
+      "relationships": [
+        "Playlist.PlaylistId = PlaylistTrack.PlaylistId"
+      ],
+      "important_columns": {
+        "PlaylistId": "Playlist identifier",
+        "Name": "Playlist name; names are not guaranteed to be unique"
+      },
+      "query_hints": [
+        "Join PlaylistTrack on PlaylistId, then Track on TrackId, to inspect membership.",
+        "Group by PlaylistId as well as Name because different playlists can share a name."
+      ],
+      "row_count_estimate": 18,
+      "requires_date_filter": false,
+      "sample_queries": [
+        "SELECT p.PlaylistId, p.Name AS Playlist, COUNT(pt.TrackId) AS TrackCount FROM Playlist AS p LEFT JOIN PlaylistTrack AS pt ON pt.PlaylistId = p.PlaylistId GROUP BY p.PlaylistId, p.Name ORDER BY TrackCount DESC"
+      ]
+    },
+    "PlaylistTrack": {
+      "table": "PlaylistTrack",
+      "description": "Bridge table representing membership of tracks in playlists.",
+      "grain": "One row per unique playlist and track pair.",
+      "column_types": {
+        "PlaylistId": "INTEGER NOT NULL COMPOSITE PRIMARY KEY",
+        "TrackId": "INTEGER NOT NULL COMPOSITE PRIMARY KEY"
+      },
+      "relationships": [
+        "PlaylistTrack.PlaylistId = Playlist.PlaylistId",
+        "PlaylistTrack.TrackId = Track.TrackId"
+      ],
+      "important_columns": {
+        "PlaylistId": "Playlist identifier",
+        "TrackId": "Member track identifier"
+      },
+      "query_hints": [
+        "This table contains no sales facts; it describes playlist membership only.",
+        "Count rows per PlaylistId for playlist size or distinct PlaylistId values per TrackId for playlist reach."
+      ],
+      "row_count_estimate": 8715,
+      "requires_date_filter": false,
+      "sample_queries": [
+        "SELECT TrackId, COUNT(*) AS PlaylistCount FROM PlaylistTrack GROUP BY TrackId ORDER BY PlaylistCount DESC LIMIT 10"
+      ]
+    },
+    "Track": {
+      "table": "Track",
+      "description": "Tracks in the Chinook catalog with album, genre, media format, composer, duration, file size, and catalog unit price.",
+      "grain": "One row per track.",
+      "column_types": {
+        "TrackId": "INTEGER NOT NULL PRIMARY KEY",
+        "Name": "NVARCHAR(200) NOT NULL",
+        "AlbumId": "INTEGER NULL",
+        "MediaTypeId": "INTEGER NOT NULL",
+        "GenreId": "INTEGER NULL",
+        "Composer": "NVARCHAR(220) NULL",
+        "Milliseconds": "INTEGER NOT NULL",
+        "Bytes": "INTEGER NULL",
+        "UnitPrice": "NUMERIC(10,2) NOT NULL"
+      },
+      "relationships": [
+        "Track.AlbumId = Album.AlbumId",
+        "Track.GenreId = Genre.GenreId",
+        "Track.MediaTypeId = MediaType.MediaTypeId",
+        "Track.TrackId = InvoiceLine.TrackId",
+        "Track.TrackId = PlaylistTrack.TrackId"
+      ],
+      "important_columns": {
+        "TrackId": "Track identifier",
+        "Name": "Track name",
+        "AlbumId": "Album identifier; may be null",
+        "MediaTypeId": "Media-format identifier",
+        "GenreId": "Genre identifier; may be null",
+        "Composer": "Composer credit; may be null",
+        "Milliseconds": "Track duration in milliseconds",
+        "Bytes": "File size in bytes; may be null",
+        "UnitPrice": "Current catalog price, not necessarily the realized historical sale price"
+      },
+      "query_hints": [
+        "Use InvoiceLine.UnitPrice rather than Track.UnitPrice for realized sales revenue.",
+        "Join Album, then Artist, for artist attribution.",
+        "Use LEFT JOIN for nullable AlbumId or GenreId when preserving all tracks matters.",
+        "Divide Milliseconds by 60000.0 for duration in minutes."
+      ],
+      "row_count_estimate": 3503,
+      "requires_date_filter": false,
+      "sample_queries": [
+        "SELECT t.Name AS Track, ar.Name AS Artist, ROUND(t.Milliseconds / 60000.0, 2) AS Minutes FROM Track AS t LEFT JOIN Album AS al ON al.AlbumId = t.AlbumId LEFT JOIN Artist AS ar ON ar.ArtistId = al.ArtistId ORDER BY t.Milliseconds DESC LIMIT 10"
+      ]
+    }
+  }
 }

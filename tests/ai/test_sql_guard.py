@@ -67,3 +67,26 @@ def test_guarded_query_tool_run_structured_reuses_readonly_guard() -> None:
     tool = GuardedQuerySQLDatabaseTool.model_construct(db=Db())
 
     assert tool.run_structured("DROP TABLE customers").startswith("Error: forbidden SQL")
+
+
+def test_resolve_sqlite_chinook_join_uses_unqualified_allowlisted_tables() -> None:
+    allowed_tables = {"invoice", "invoiceline", "track"}
+
+    _, canonical_sql, normalized_tables, error = (
+        resolve_sql_tables_to_allowed_names_with_ast(
+            query=(
+                "SELECT t.Name, SUM(il.UnitPrice * il.Quantity) AS Revenue "
+                "FROM InvoiceLine AS il "
+                "JOIN Invoice AS i ON i.InvoiceId = il.InvoiceId "
+                "JOIN Track AS t ON t.TrackId = il.TrackId "
+                "GROUP BY t.TrackId, t.Name ORDER BY Revenue DESC LIMIT 10"
+            ),
+            allowed_full_tables=allowed_tables,
+            short_name_index={name: [name] for name in allowed_tables},
+            dialect=SQLDialect.SQLITE,
+        )
+    )
+
+    assert error is None
+    assert canonical_sql is not None
+    assert set(normalized_tables) == allowed_tables

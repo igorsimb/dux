@@ -20,6 +20,13 @@ def test_build_guarded_query_tool_returns_backend_execution_tool() -> None:
     assert tool.name == "sql_db_query"
 
 
+def test_build_short_name_index_supports_unqualified_sqlite_tables() -> None:
+    assert sql_tools.build_short_name_index({"invoice", "invoiceline"}) == {
+        "invoice": ["invoice"],
+        "invoiceline": ["invoiceline"],
+    }
+
+
 def test_load_dialect_and_tables_accepts_list_payload(tmp_path: Path) -> None:
     config_path = tmp_path / "table_descriptions.json"
     config_path.write_text(
