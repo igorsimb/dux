@@ -156,9 +156,10 @@ def resolve_sql_tables_to_allowed_names_with_ast(
     """Resolve table references to allowed fully-qualified names and return canonical SQL.
 
     The function parses SQL in the passed dialect, validates all referenced tables against
-    `allowed_full_tables`, and rewrites unqualified table names to `db.table` when the mapping
-    is unique. CTE names from `WITH ... AS (...)` are treated as local query aliases and are not
-    validated against the physical table allowlist.
+    `allowed_full_tables`, and rewrites unqualified table names to `db.table` when the unique
+    canonical allowlist name is qualified. Canonical SQLite table names remain unqualified. CTE
+    names from `WITH ... AS (...)` are treated as local query aliases and are not validated against
+    the physical table allowlist.
 
     Examples:
     - Input: `SELECT count(*) FROM customers`
@@ -231,8 +232,9 @@ def resolve_sql_tables_to_allowed_names_with_ast(
             continue
 
         full_name = matches[0]
-        db_resolved, _ = full_name.split(".", 1)
-        table.set("db", exp.to_identifier(db_resolved))
+        db_resolved, separator, _ = full_name.partition(".")
+        if separator:
+            table.set("db", exp.to_identifier(db_resolved))
         normalized_tables.add(full_name)
 
     if disallowed:

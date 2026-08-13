@@ -9,8 +9,8 @@ making the model the authority for SQL safety. Dux keeps these responsibilities 
 - `ai/table_metadata.json` describes columns, table grain, date-filter requirements, and query guidance.
 - `ai/sql_guard.py` and `ai/ai_utils/validate_sql.py` enforce deterministic policy.
 
-The public repository ships with empty catalogs. The examples below are fictional and exist only to document the file
-format.
+The public repository ships with a populated catalog for the bundled Chinook sample database. The examples below remain
+fictional so they can demonstrate the file format independently of that example catalog.
 
 ## Table descriptions
 
@@ -33,7 +33,7 @@ The root object must contain a `tables` list. Each row represents one table:
 
 Required routing fields:
 
-- `table`: fully qualified table name
+- `table`: exact canonical table name; normally `schema.table`, or an unqualified table such as `Invoice` for SQLite
 - `source`: source ID from `core/db_config/sql_sources.json`
 - `sql_dialect`: dialect matching that source
 - `allowed`: whether the table is exposed through the catalog
@@ -42,7 +42,7 @@ Additional fields such as `summary` and `tags` are model-facing context. They do
 
 ## Detailed table metadata
 
-The root object must contain a `tables` object keyed by the same fully qualified names used in the description file:
+The root object must contain a `tables` object keyed by the same canonical names used in the description file:
 
 ```json
 {
@@ -77,7 +77,7 @@ The root object must contain a `tables` object keyed by the same fully qualified
 
 ### `table`
 
-Use the exact fully qualified table name. It must match a corresponding allowed row in
+Use the exact canonical table name. It must match a corresponding allowed row in
 `ai/table_descriptions.json`. Metadata for tables outside the allowlist is filtered out before it reaches the model.
 
 ### `description`
@@ -106,8 +106,8 @@ Hints inform SQL generation but do not grant access or bypass deterministic chec
 
 ### `sample_queries`
 
-Examples should be read-only, use fully qualified allowlisted tables, match the source dialect, and contain fictional
-values. Never copy production queries into a public catalog.
+Examples should be read-only, use exact allowlisted table names with qualification where the source requires it, match
+the source dialect, and contain fictional or public sample values. Never copy production queries into a public catalog.
 
 ## A fictional MSSQL example
 

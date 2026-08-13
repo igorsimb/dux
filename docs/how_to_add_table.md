@@ -74,6 +74,10 @@ Example (new MSSQL table in existing `mssql_default`):
 }
 ```
 
+The public repository also includes the `chinook` SQLite source. Its optional `CHINOOK_DATABASE_PATH` override falls
+back to repository-root `Chinook.db`. SQLite catalog rows use exact unqualified names such as `Invoice` and dialect
+`sqlite`.
+
 ## Path B: New Source + New Table
 
 Use this when table is on a DB server not yet in source registry.
@@ -99,6 +103,21 @@ Example source entry (MS SQL):
     "password": "MSSQL_FINANCE_PASSWORD",
     "database": "MSSQL_FINANCE_DATABASE"
   }
+}
+```
+
+For a file-backed SQLite source, map a logical `path` to an environment-variable name and provide a repository-relative
+fallback file when the source should work without extra configuration:
+
+```json
+{
+  "id": "sqlite_demo",
+  "dialect": "sqlite",
+  "driver": "sqlite",
+  "env": {
+    "path": "SQLITE_DEMO_DATABASE_PATH"
+  },
+  "default_database": "example.db"
 }
 ```
 

@@ -45,6 +45,10 @@ def test_authenticated_chat_navigation_uses_english_copy(client) -> None:
     assert "Theme" in content
     assert "Sign out" in content
     assert 'aria-label="Toggle menu"' in content
+    assert "latest year represented in Chinook" in content
+    assert "Which tracks appear in the most playlists?" in content
+    assert content.count("using the bundled Chinook data") == 2
+    assert "top 10 products by sales quantity" not in content
 
 
 @pytest.mark.parametrize("path", ["/", "/run_chat/"])

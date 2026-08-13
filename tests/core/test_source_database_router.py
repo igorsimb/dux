@@ -155,6 +155,32 @@ def test_get_sql_database_for_source_routes_mssql(
     assert sql_database == "mssql_db"
 
 
+def test_get_sql_database_for_source_routes_sqlite(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    sqlite_source = SQLSourceConfig(
+        id="chinook",
+        dialect=SQLDialect.SQLITE,
+        driver="sqlite",
+        env={"path": "CHINOOK_DATABASE_PATH"},
+        default_database="Chinook.db",
+    )
+
+    monkeypatch.setattr(router, "get_source_by_id", lambda source_id: sqlite_source)
+    monkeypatch.setattr(
+        router,
+        "get_include_tables_for_source",
+        lambda source_id, path=None, database_name=None: ["Invoice", "InvoiceLine"],
+    )
+    monkeypatch.setattr(
+        router, "create_sqlite_sql_database", lambda source, include_tables: "sqlite_db"
+    )
+
+    sql_database = router.get_sql_database_for_source("chinook")
+
+    assert sql_database == "sqlite_db"
+
+
 def test_get_sql_database_for_source_rejects_unknown_driver(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

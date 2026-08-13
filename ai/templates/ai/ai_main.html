@@ -825,7 +825,10 @@
                 <ul class="mb-3 list-disc space-y-2 pl-5 text-sm leading-6">
                     <li>Double-check answers: like any AI system, Dux can make mistakes.</li>
                     <li>Include context when possible: the source, table, fields, period, metric, and desired format.</li>
-                    <li>If a customer, product, or category name may vary, ask Dux to consider alternative spellings.</li>
+                    <li>
+                        If an artist, album, track, customer, or genre name may vary, ask Dux to consider alternative
+                        spellings.
+                    </li>
                     <li>
                         Dux shows up to 50 rows by default. To see more, specify a number, such as "show 200."
                     </li>
@@ -840,13 +843,13 @@
                 <div class="mt-3">
                     <div class="mb-2 font-semibold">Example prompts:</div>
                     <ul class="list-decimal space-y-2 pl-5 text-sm leading-6">
-                        <li>Analyze sales trends by quantity and revenue over the last 30 days and summarize the findings.</li>
-                        <li>Show the top 10 customers by total order value over the last 7 days.</li>
-                        <li>Compare regional sales by quantity and revenue over the last 30 days.</li>
-                        <li>Show the top 10 products by sales quantity over the last 2 weeks.</li>
-                        <li>Show average order value and monthly order count for the current year.</li>
-                        <li>Find product categories whose sales declined compared with last month.</li>
-                        <li>Show the 20 highest-value orders from the last month.</li>
+                        <li>Which artists generated the most revenue in the latest year represented in Chinook?</li>
+                        <li>Show the top 10 customers by total invoice value.</li>
+                        <li>Compare revenue and units sold by billing country.</li>
+                        <li>Which genres generated the most revenue, and which sold the most tracks?</li>
+                        <li>Compare the sales handled by each customer support representative.</li>
+                        <li>Which tracks appear in the most playlists?</li>
+                        <li>Show the longest albums by total track duration.</li>
                     </ul>
                 </div>
                 <div class="modal-action">
@@ -872,7 +875,7 @@
                         type="button"
                         class="btn btn-success btn-sm"
                         data-indicator:is-waiting-response
-                        data-on:click="if ($isWaitingResponse) return; $userInput='Briefly describe what you can do. Give 5-7 points and 3 example questions about sales, orders, customers, products, and inventory. Also mention your limitations.'; @get('{% url "run_chat" %}', { openWhenHidden: true }); $userInput='';"
+                        data-on:click="if ($isWaitingResponse) return; $userInput='Briefly describe what you can do. Give 5-7 points and 3 example questions using the bundled Chinook data about invoices, customers, artists, albums, tracks, genres, employees, or playlists. Also mention your limitations.'; @get('{% url "run_chat" %}', { openWhenHidden: true }); $userInput='';"
                 >
                     What can you do?
                 </button>
@@ -895,7 +898,7 @@
                                     type="button"
                                     class="btn btn-success btn-sm"
                                     data-indicator:is-waiting-response
-                                    data-on:click="if ($isWaitingResponse) return; $userInput='Briefly describe what you can do. Give 5-7 points and 3 example questions about sales, orders, customers, products, and inventory. Also mention your limitations.'; @get('{% url "run_chat" %}', { openWhenHidden: true }); $userInput='';"
+                                    data-on:click="if ($isWaitingResponse) return; $userInput='Briefly describe what you can do. Give 5-7 points and 3 example questions using the bundled Chinook data about invoices, customers, artists, albums, tracks, genres, employees, or playlists. Also mention your limitations.'; @get('{% url "run_chat" %}', { openWhenHidden: true }); $userInput='';"
                             >
                                 What can you do?
                             </button>

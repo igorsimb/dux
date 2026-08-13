@@ -23,6 +23,15 @@
         "password": "MSSQL_PASSWORD",
         "database": "MSSQL_DATABASE"
       }
+    },
+    {
+      "id": "chinook",
+      "dialect": "sqlite",
+      "driver": "sqlite",
+      "env": {
+        "path": "CHINOOK_DATABASE_PATH"
+      },
+      "default_database": "Chinook.db"
     }
   ]
 }

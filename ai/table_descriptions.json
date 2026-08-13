@@ -1,3 +1,92 @@
 {
-  "tables": []
+  "tables": [
+    {
+      "table": "Album",
+      "source": "chinook",
+      "sql_dialect": "sqlite",
+      "summary": "Music albums linked to their artists and tracks.",
+      "tags": ["music", "album", "artist", "catalog"],
+      "allowed": true
+    },
+    {
+      "table": "Artist",
+      "source": "chinook",
+      "sql_dialect": "sqlite",
+      "summary": "Artists represented in the Chinook music catalog.",
+      "tags": ["music", "artist", "catalog"],
+      "allowed": true
+    },
+    {
+      "table": "Customer",
+      "source": "chinook",
+      "sql_dialect": "sqlite",
+      "summary": "Fictional store customers with contact, location, and support representative details.",
+      "tags": ["customer", "country", "city", "support", "sales"],
+      "allowed": true
+    },
+    {
+      "table": "Employee",
+      "source": "chinook",
+      "sql_dialect": "sqlite",
+      "summary": "Fictional employees, including support representatives and their reporting hierarchy.",
+      "tags": ["employee", "support", "manager", "organization"],
+      "allowed": true
+    },
+    {
+      "table": "Genre",
+      "source": "chinook",
+      "sql_dialect": "sqlite",
+      "summary": "Music genre lookup used to classify tracks.",
+      "tags": ["music", "genre", "category", "catalog"],
+      "allowed": true
+    },
+    {
+      "table": "Invoice",
+      "source": "chinook",
+      "sql_dialect": "sqlite",
+      "summary": "Customer invoice headers with billing geography, invoice date, and total value.",
+      "tags": ["sales", "invoice", "customer", "revenue", "country", "date"],
+      "allowed": true
+    },
+    {
+      "table": "InvoiceLine",
+      "source": "chinook",
+      "sql_dialect": "sqlite",
+      "summary": "Invoice line items connecting sold tracks to quantity and realized unit price.",
+      "tags": ["sales", "invoice", "line item", "track", "quantity", "revenue"],
+      "allowed": true
+    },
+    {
+      "table": "MediaType",
+      "source": "chinook",
+      "sql_dialect": "sqlite",
+      "summary": "Audio and video media format lookup used by tracks.",
+      "tags": ["music", "media", "format", "catalog"],
+      "allowed": true
+    },
+    {
+      "table": "Playlist",
+      "source": "chinook",
+      "sql_dialect": "sqlite",
+      "summary": "Named playlists in the music catalog.",
+      "tags": ["music", "playlist", "curation"],
+      "allowed": true
+    },
+    {
+      "table": "PlaylistTrack",
+      "source": "chinook",
+      "sql_dialect": "sqlite",
+      "summary": "Many-to-many membership linking playlists and tracks.",
+      "tags": ["music", "playlist", "track", "membership", "bridge"],
+      "allowed": true
+    },
+    {
+      "table": "Track",
+      "source": "chinook",
+      "sql_dialect": "sqlite",
+      "summary": "Music and video tracks with album, genre, media type, composer, duration, size, and catalog price.",
+      "tags": ["music", "track", "album", "genre", "composer", "price", "catalog"],
+      "allowed": true
+    }
+  ]
 }

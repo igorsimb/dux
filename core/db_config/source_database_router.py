@@ -9,6 +9,7 @@ from langchain_community.utilities import SQLDatabase
 
 from core.db_config.clickhouse_connector import create_clickhouse_sql_database
 from core.db_config.mssql_connector import create_mssql_sql_database
+from core.db_config.sqlite_connector import create_sqlite_sql_database
 from core.db_config.source_registry import get_source_by_id
 
 TABLE_DESCRIPTIONS_PATH = (
@@ -67,6 +68,8 @@ def get_sql_database_for_source(source_id: str) -> SQLDatabase:
         return create_clickhouse_sql_database(source, include_tables)
     if source.driver == "mssql":
         return create_mssql_sql_database(source, include_tables)
+    if source.driver == "sqlite":
+        return create_sqlite_sql_database(source, include_tables)
     raise ValueError(
         f"Unsupported source driver '{source.driver}' for source '{source.id}'"
     )
