@@ -9,6 +9,74 @@ The public repository includes the Chinook sample music-store database and a com
 clone can demonstrate the guarded query flow without an external database. Deployments can replace or extend the
 example with their own sources, allowlisted tables, and model-facing metadata.
 
+## Quickstart
+
+Choose either Docker or native Python. You only need one of these paths to set up and run Dux.
+
+First, clone the repository and create your local environment file:
+
+```console
+git clone https://github.com/igorsimb/dux.git
+cd dux
+cp .env.example .env
+```
+
+Next, [create an OpenAI API key](https://platform.openai.com/api-keys), open `.env`, and set it explicitly:
+
+```dotenv
+OPENAI_API_KEY=your-api-key-here
+```
+
+Keep this key private and do not commit your populated `.env` file. Then continue with either Docker or native Python.
+
+### Docker
+
+```console
+docker compose run --rm --build web python manage.py setup --noinput
+docker compose up
+```
+
+Open `http://localhost:8012` and sign in with:
+
+```text
+Email: admin@test.com
+Password: password321
+```
+
+### Native Python
+
+Python 3.13 is required. On Windows PowerShell:
+
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+python manage.py setup --noinput
+python manage.py runserver
+```
+
+On macOS or Linux:
+
+```console
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+python manage.py setup --noinput
+python manage.py runserver
+```
+
+Open `http://127.0.0.1:8000` and use the same development credentials shown above.
+
+The `setup` command applies all migrations and creates the initial administrator. It is safe to run again and will not
+replace an existing administrator or reset its password. Omit `--noinput` to create the administrator interactively:
+
+```console
+python manage.py setup
+```
+
+The default secret key and administrator credentials are intended only for local development. Before deploying Dux,
+set a unique `DJANGO_SECRET_KEY` and provision secure administrator credentials.
+
 ## Why the SQL flow is guarded
 
 Model-generated SQL is never executed directly. Every query crosses a two-step capability boundary:
@@ -61,36 +129,13 @@ Both files contain the 11-table Chinook catalog by default. See `docs/how_to_add
 `docs/table_metadata_reference.md` before replacing or adding deployment-specific catalog entries. Treat catalog
 changes as security changes because they determine what SQL the model can validate and execute.
 
-## Run locally
-
-Requirements:
-
-- Python 3.13
-- ODBC Driver 18 for SQL Server when using MSSQL
-- Access to any additional configured external data source
-
-Install dependencies and apply Django migrations:
-
-```powershell
-uv sync
-.venv/Scripts/python.exe manage.py migrate
-```
-
-Start the supported ASGI server:
-
-```powershell
-.venv/Scripts/python.exe -m daphne config.asgi:application
-```
-
-Open the local address printed by Daphne and sign in with an account provisioned by an administrator.
-
 ## Environment variables
 
 Create a local `.env` file. It is ignored by Git and excluded from Docker build context.
 
 Application and model settings:
 
-- `DJANGO_SECRET_KEY`: required Django signing key
+- `DJANGO_SECRET_KEY`: optional locally; defaults to the checked-in development-only key and is required for deployment
 - `DJANGO_DEBUG`: optional, defaults to `1`
 - `DJANGO_ALLOWED_HOSTS`: optional comma-separated host list, defaults to `*`
 - `SQLITE_PATH`: optional application database path
@@ -115,8 +160,8 @@ Default MSSQL source:
 - `MSSQL_DATABASE`
 - `MSSQL_ODBC_DRIVER`: optional, defaults to `ODBC Driver 18 for SQL Server`
 
-Never commit a populated `.env`, connection values, production catalog metadata, database dumps, application logs, or
-chat transcripts.
+Never commit production secrets, connection values, production catalog metadata, database dumps, application logs, or
+chat transcripts. The populated local `.env` remains ignored by Git and excluded from Docker builds.
 
 ## Tests
 

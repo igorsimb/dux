@@ -24,8 +24,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
+# This checked-in key is only for a frictionless local development setup.
+# Deployments must provide a unique DJANGO_SECRET_KEY through the environment.
+DEVELOPMENT_SECRET_KEY = "django-insecure-dux-local-development-only"
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY") or DEVELOPMENT_SECRET_KEY
 
 
 def _split_hosts(value: str) -> list[str]:
