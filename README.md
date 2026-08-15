@@ -29,7 +29,7 @@ OPENAI_API_KEY=your-api-key-here
 
 Keep this key private and do not commit your populated `.env` file. Then continue with either Docker or native Python.
 
-### Docker
+### Docker (recommended)
 
 ```console
 docker compose run --rm --build web python manage.py setup --noinput
