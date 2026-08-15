@@ -85,8 +85,9 @@ configuration when deterministic tests can cover the risk.
 - For SSE/runtime changes, start with `tests/ai/test_views_streaming_flow.py`, `test_streaming_usage.py`, and the
   focused runtime test matching the changed module. For SQL changes, start with the corresponding `test_validate_sql*`,
   `test_sql_guard.py`, `test_sql_tools_config.py`, or `test_ai_tools_execute_validated_sql.py` coverage.
-- Local web smoke testing should use ASGI: `python -m daphne config.asgi:application`. Docker Compose migrates the
-  SQLite application database at startup and binds host `chatlogs/` and `logs/`; do not commit their runtime contents.
+- Local web smoke testing can use Daphne's ASGI-backed `python manage.py runserver`. The Quickstart setup command
+  migrates the SQLite application database before Docker Compose startup. Compose binds host `chatlogs/` and `logs/`;
+  do not commit their runtime contents.
 
 ## Configuration Boundaries
 
