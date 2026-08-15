@@ -9,11 +9,11 @@
 </pre>
 </div>
 
-# Dux
+# Dux SQL Agent
 
-Dux is a guarded natural-language-to-SQL application for developers who want flexible AI-generated queries while
-keeping database authority in application code. It ships with a Django chat UI powered by Datastar, a runnable Chinook
-demo, and support for allowlisted SQLite, ClickHouse, and Microsoft SQL Server sources.
+Dux SQL Agent is a guarded natural-language-to-SQL application for developers who want flexible AI-generated queries
+while keeping database authority in application code. It ships with a Django chat UI powered by Datastar, a runnable
+Chinook demo, and support for allowlisted SQLite, ClickHouse, and Microsoft SQL Server sources.
 
 The model composes the read-only SQL each question requires. Deterministic, tested code approves the query before
 execution.
