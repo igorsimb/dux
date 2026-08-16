@@ -121,6 +121,11 @@ unique `DJANGO_SECRET_KEY` and provision secure administrator credentials.
 Want to connect your own database, extend the catalog, or inspect the validation architecture? Start with the
 [documentation](docs/README.md).
 
+For the design story and trade-offs behind Dux, read my design story
+[I Wanted a Flexible SQL Agent. I Didn’t Want to Trust the LLM][dux-story].
+
+[dux-story]: https://igorsimb.ru/blog/i-wanted-a-flexible-sql-agent-i-didnt-want-to-trus/
+
 ## License
 
 See [LICENSE](LICENSE).
